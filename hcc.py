@@ -20,7 +20,7 @@ chf_gcopdcf,gsubstanceabuse_gpsychiatric, gcopdcf_card_resp_fail, hcc47_gcancer,
 ne_origds,nmcaid_norigdis,mcaid_norigdis,nmcaid_origdis,mcaid_origdis,community_nondual_aged_score,
 community_nondual_disabled_score, community_full_benefit_dual_aged_score,community_full_benefit_dual_disabled_score,
 community_partial_benefit_dual_aged_score, community_partial_benefit_dual_disabled_score,snp_new_enrollee_score,
-CNA, CND, CFA, CFD, CPA, CPD, SNPNE
+CNA, CND, CFA, CFD, CPA, CPD, SNPNE,age_upto
 """)
 pyDatalog.create_terms("X,Y,Z")
 
@@ -57,6 +57,7 @@ class Diagnosis(pyDatalog.Mixin):
 class Beneficiary(pyDatalog.Mixin):
 	def __init__(self,
 							hicno,sex,dob,
+							age_upto,
 							original_reason_entitlement=EntitlementReason.OASI,
 							medicaid=False,
 							newenrollee_medicaid=False):
@@ -64,14 +65,15 @@ class Beneficiary(pyDatalog.Mixin):
 		self.hicno = hicno
 		self.sex = sex
 		self.dob = datetime.strptime(dob,"%Y%m%d")
-		self.age = age_as_of(self.dob,datetime.now())
+		self.age_upto= datetime.strptime(age_upto,"%Y%m%d")
+		self.age = age_as_of(self.dob,self.age_upto)
 		self.medicaid = medicaid
 		self.newenrollee_medicaid = newenrollee_medicaid
 		self.original_reason_entitlement = original_reason_entitlement
 		self.diagnoses = []
 
 	def __repr__(self): # specifies how to display an Employee
-		return "ID:" + str(self.hicno) + ",DOB:" + str(self.dob)
+		return "ID:" + str(self.hicno) + ",DOB:" + str(self.dob)+ ",age_upto:" + str(self.age_upto)
 
 	def add_diagnosis(self,diag):
 		self.diagnoses.append(diag)
