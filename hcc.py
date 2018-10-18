@@ -6,7 +6,7 @@ import os
 import pandas as pd
 
 pyDatalog.create_terms("""
-regvars,Regvars,output,Col,Val,score_em,Score,score,Scores,NE,INS,institutional_score,age_range,
+Vars,regvars,Regvars,output,Col,Val,score_em,Score,score,Scores,NE,INS,institutional_score,age_range,
 new_enrollee_score,Pair,Coef,coefficient,b,dc,overrides,wrap,
 has_cc_that_overrides_this_one,beneficiary_has_hcc,Type,OT,beneficiary_has_cc,cc,CC,CC2,
 ICD,edit,male,B,Diag,Ben,female,medicaid,age,A,old_age_entitled,new_enrollee,D,ben_hcc,
