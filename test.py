@@ -14,13 +14,7 @@ def main():
     print(out)
 
     # output
-
-    # [{'valid_community_aged_variables': ['F65_69', 'HCC19']},
-    #  {'valid_community_disabled_variables': ['HCC19']},
-    #  {'valid_community_aged_variables': ['F65_69', 'HCC19']},
-    #  {'valid_community_disabled_variables': ['HCC19']},
-    #  {'valid_community_aged_variables': ['F65_69', 'HCC19']},
-    #  {'valid_community_disabled_variables': ['HCC19']}]
+    # [{'cna_f65_69': 0.312}, {'cna_hcc19': 0.10400000000000001}, {'cna_originallydisabled_female': 0.244}]
 
 
 if __name__ == '__main__':
