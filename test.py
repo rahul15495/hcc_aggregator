@@ -6,8 +6,9 @@ def main():
                                 sex= 'F',
                                 dob= '1948-03-16',
                                 year_of_eligibility= '2018',
-                                RAF_type= 'CNA',
-                                orec= 1,
+                                RAF_type= 'INS',
+                                orec= 3,
+                                medicaid= False,
                                 codes=['E119', 'E119', 'E119', 'E119', 'E119', 'E119', 'E119']
                                 )
 
