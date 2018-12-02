@@ -1,35 +1,53 @@
-from hcc import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars
 from pyDatalog import pyDatalog
 import pandas as pd
 
-raf_type_lookup = {'CFA': 'valid_community_aged_variables', 'CFD': 'valid_community_disabled_variables',
-                   'CNA': 'valid_community_aged_variables', 'CND': 'valid_community_disabled_variables',
-                   'CPA': 'valid_community_aged_variables', 'CPD': 'valid_community_disabled_variables',
-                   'NE': 'valid_new_enrollee_variables', 'SNPE': 'valid_new_enrollee_variables',
-                   'INS': 'valid_institutional_variables'
-                   }
+raf_type_lookup_v22 = {'CFA': 'valid_community_aged_variables', 'CFD': 'valid_community_disabled_variables',
+                       'CNA': 'valid_community_aged_variables', 'CND': 'valid_community_disabled_variables',
+                       'CPA': 'valid_community_aged_variables', 'CPD': 'valid_community_disabled_variables',
+                       'NE': 'valid_new_enrollee_variables', 'SNPE': 'valid_new_enrollee_variables',
+                       'INS': 'valid_institutional_variables'
+                       }
+
+raf_type_lookup_esrd = {'DI': 'valid_dialysis_variables', 'DNE': 'valid_dialysis_new_enrollee_variables',
+                        'GC': 'valid_functioning_graft_community_variables', 'GI': 'valid_functioning_graft_institutional_variables',
+                        'GNE': 'valid_functioning_graft_new_enrolle_regression_variables'
+                        }
 
 sex_lookup = {'f': 'female', 'm': 'male'}
 
-coefficients_file_path = 'hcc_coefficients_cleaned.csv'
+coefficients_file_path_v22 = 'v22/hcc_coefficients_cleaned.csv'
+
+coefficients_file_path_esrd = "esrd/hcccoefn_cleaned.csv"
 
 
 def format_date(date): return ''.join(date.split('-'))
 
 
-# def get_orec(RAF_type):
-
-#     char1, char2, char3 = RAF_type
-
-#     if char1 == 'E' and char3 == 'D':
-#         orec = 3
-#     else:
-#         orec = {'A': 0, 'D': 1}[char3]
-
-#     return orec
-
-
 def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medicaid=True, codes=[]):
+
+    global Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, raf_type_lookup
+
+    RAF_type = RAF_type.upper()
+
+    if RAF_type in raf_type_lookup_v22.keys():
+
+        from v22.hcc import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars
+
+        coefficients_file_path = coefficients_file_path_v22
+
+        raf_type_lookup = raf_type_lookup_v22
+
+    elif RAF_type in raf_type_lookup_esrd.keys():
+
+        from esrd.hcc_esrd import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars
+
+        coefficients_file_path = coefficients_file_path_esrd
+
+        raf_type_lookup = raf_type_lookup_esrd
+
+    else:
+        print("invalid RAF_type: {}".format(RAF_type))
+        return
 
     try:
         coefficients_df = pd.read_csv(
@@ -54,14 +72,6 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
 
     formatted_sex = sex_lookup[sex.lower()]
 
-    # if RAF_type:
-
-    RAF_type = RAF_type.upper()
-
-    if RAF_type not in raf_type_lookup.keys():
-        print("invalid RAF_type: {}".format(RAF_type))
-        return
-
     if orec not in [0, 1, 2, 3]:
         print("invaild original_reason_entitlement : {}".format(orec))
         return
@@ -72,29 +82,7 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
         person = Beneficiary(hicno=hicno, sex=formatted_sex, dob=formatted_dob,
                              age_upto=formatted_age_upto, original_reason_entitlement=temp_orec, medicaid=medicaid, )
 
-    # print(person)
-
-    # else:
-    #     print("caluclating codes for all the RAF types")
-
-    #     cc
-    #         if not orec:
-    #             temp_orec = get_orec(RAF_type)
-
-    #             print("calulating scores for RAF_type {}, assuming orec: {}".format(
-    #                 RAF_type, temp_orec))
-
-    #         else:
-    #             temp_orec = orec
-
-    #         person = Beneficiary(hicno=hicno, sex=formatted_sex, dob=formatted_dob,
-    #                              age_upto=formatted_age_upto, original_reason_entitlement=temp_orec, medicaid=medicaid, )
-
-    #         print(person)
-
     for code in codes:
-
-        # print('adding code :{}'.format(code))
 
         add_diagnosis_code(person, code)
 
@@ -106,7 +94,7 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
 
     hcc_reg_variables_list = regvars(person, temp_raf_type, Vars)
 
-    if len(hcc_reg_variables_list) >0 :
+    if len(hcc_reg_variables_list) > 0:
 
         condition_categories = hcc_reg_variables_list[
             0][0].split(',')
@@ -124,7 +112,7 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
         # get condition_category coefficients
 
         return out_df
-    
+
     else:
         []
 
