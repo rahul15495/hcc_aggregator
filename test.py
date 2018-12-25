@@ -17,6 +17,5 @@ def main():
     # output
     # [{'cna_f65_69': 0.312}, {'cna_hcc19': 0.10400000000000001}, {'cna_originallydisabled_female': 0.244}]
 
-
 if __name__ == '__main__':
     main()
