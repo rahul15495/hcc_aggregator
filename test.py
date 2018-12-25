@@ -6,7 +6,7 @@ def main():
                                 sex= 'M',
                                 dob= '1956-03-16',
                                 year_of_eligibility= '2018',
-                                RAF_type= 'DI',
+                                RAF_type= 'CNA',
                                 orec= 1,
                                 medicaid= True,
                                 codes=['I209', 'I70203', 'E119', 'E119', 'E119', 'E119', 'E119']
