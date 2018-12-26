@@ -7,8 +7,7 @@ import os
 import pandas as pd
 
 pyDatalog.create_terms("""
-Vars,regvars,Regvars,output,Col,Val,score_em,Score,score,Scores,NE,INS,institutional_score,age_range,
-new_enrollee_score,Pair,Coef,coefficient,b,dc,overrides,wrap,
+Vars,regvars,Regvars,output,Col,Val,score_em,Score,score,Scores,NE,INS,age_range,Pair,Coef,coefficient,b,dc,overrides,wrap,
 has_cc_that_overrides_this_one,beneficiary_has_hcc,Type,OT,beneficiary_has_cc,cc,CC,CC2,
 ICD,edit,male,B,Diag,Ben,female,medicaid,age,A,old_age_entitled,new_enrollee,D,ben_hcc,
 sepsis_pressure_ulcer, sepsis_artif_openings,art_openings_pressure_ulcer, diabetes_chf,
@@ -19,7 +18,9 @@ sex_age_range,U,L,disabled,
 originally_disabled,ben_hcc,sex_age,MF,indicator,excised,beneficiary_icd,CC,B,
 valid_dialysis_new_enrollee_variables, valid_dialysis_variables, valid_functioning_graft_community_variables,
 valid_functioning_graft_institutional_variables, valid_functioning_graft_new_enrolle_regression_variables,
-indicator,ne_origds,nmcaid_norigdis,mcaid_norigdis,nmcaid_origdis,mcaid_origdis,age_upto
+indicator,ne_origds,nmcaid_norigdis,mcaid_norigdis,nmcaid_origdis,mcaid_origdis,age_upto,
+dialysis_score,dialysis_new_enrollee_score,functioning_graft_community_score,
+functioning_graft_institutional_score, functioning_graft_new_enrolle_score,ScoreVar
 """)
 pyDatalog.create_terms("X,Y,Z")
 
@@ -556,6 +557,32 @@ def load_rules():
     (valid_functioning_graft_new_enrolle_regression_variables[B] == concat_(
         CC, key=CC, sep=',')) <= indicator(B, CC) & CC.in_(functioning_graft_new_enrolle_regression_vars)
 
+    (dialysis_score[B] == sum_(Coef, key=Coef)) <= indicator(
+        B, CC) & CC.in_(dialysis_regression_vars) & coefficient("DI_"+CC, Coef)
+
+    (dialysis_new_enrollee_score[B] == sum_(Coef, key=Coef)) <= indicator(
+        B, CC) & CC.in_(dialysis_new_enrollee_regression_vars) & coefficient("DNE_"+CC, Coef)
+
+    (functioning_graft_community_score[B] == sum_(Coef, key=Coef)) <= indicator(
+        B, CC) & CC.in_(functioning_graft_community_regression_vars) & coefficient("GC_"+CC, Coef)
+
+    (functioning_graft_institutional_score[B] == sum_(Coef, key=Coef)) <= indicator(
+        B, CC) & CC.in_(functioning_graft_institutional_regression_vars) & coefficient("GI_"+CC, Coef)
+
+    (functioning_graft_new_enrolle_score[B] == sum_(Coef, key=Coef)) <= indicator(
+        B, CC) & CC.in_(functioning_graft_new_enrolle_regression_vars) & coefficient("GNE_"+CC, Coef)
+
+
+    score(B, "dialysis", Score) <= (dialysis_score[B] == Score)
+    score(B, "dialysis_new_enrollee", Score) <= (
+        dialysis_new_enrollee_score[B] == Score)
+    score(B, "functioning_graft_community", Score) <= (
+        functioning_graft_community_score[B] == Score)
+    score(B, "functioning_graft_institutional", Score) <= (
+        functioning_graft_institutional_score[B] == Score)
+    score(B, "functioning_graft_new_enrolle", Score) <= (
+        functioning_graft_new_enrolle_score[B] == Score)
+
     regvars(B, "valid_dialysis_variables", Regvars) <= (
         valid_dialysis_variables[B] == Regvars)
     regvars(B, "valid_dialysis_new_enrollee_variables", Regvars) <= (
@@ -566,6 +593,11 @@ def load_rules():
         valid_functioning_graft_institutional_variables[B] == Regvars)
     regvars(B, "valid_functioning_graft_new_enrolle_regression_variables", Regvars) <= (
         valid_functioning_graft_new_enrolle_regression_variables[B] == Regvars)
+
+    output(B, Col, Val) <= score(B, Col, Val)
+    output(B, Col, 0) <= Col.in_(allvars) & ~(indicator(B, Col))
+    output(B, Col, 1) <= indicator(B, Col)
+    output(B, "sex", Val) <= (Ben.sex[B] == Val)
 
 
 load_facts()

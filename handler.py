@@ -19,19 +19,54 @@ coefficients_file_path_v22 = 'v22/hcc_coefficients_cleaned.csv'
 
 coefficients_file_path_esrd = "esrd/hcccoefn_cleaned.csv"
 
+template = {
+    'age': [],
+    'entl': [],
+    'diag': [],
+    'none': []
+}
+
 
 def format_date(date): return ''.join(date.split('-'))
 
+def get_score_variable(a): return "{}".format(a.replace('valid_','').replace('_variables', ''))
 
-def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medicaid=True, codes=[]):
 
-    global Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, raf_type_lookup
+def get_RAF_contribution(temp_df, var):
+
+    out = template.copy()
+
+    for i in var:
+
+        if i in temp_df['age']:
+
+            out['age'].append({i: None})
+
+        elif i in temp_df['entl']:
+
+            out['entl'].append({i: None})
+
+        elif i in temp_df['diag']:
+
+            out['diag'].append({i: None})
+
+        else:
+
+            out['none'].append({i: None})
+
+    return out
+
+
+def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_type=None, orec=0, medicaid=True, codes=[]):
+
+    global Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, raf_type_lookup, get_age_entitlement_diag_vars, ScoreVar
 
     RAF_type = RAF_type.upper()
 
     if RAF_type in raf_type_lookup_v22.keys():
 
-        from v22.hcc import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars
+        from v22.hcc import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, ScoreVar
+        from v22.regvars import get_age_entitlement_diag_vars
 
         coefficients_file_path = coefficients_file_path_v22
 
@@ -39,7 +74,8 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
 
     elif RAF_type in raf_type_lookup_esrd.keys():
 
-        from esrd.hcc_esrd import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars
+        from esrd.hcc_esrd import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, ScoreVar
+        from esrd.regvars import get_age_entitlement_diag_vars
 
         coefficients_file_path = coefficients_file_path_esrd
 
@@ -53,6 +89,8 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
         coefficients_df = pd.read_csv(
             coefficients_file_path, names=['raf_type', 'coeff'])
 
+        matrix = get_age_entitlement_diag_vars()
+
         # print(coefficients_df.head())
 
     except:
@@ -64,7 +102,7 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
 
     formatted_dob = format_date(dob)
 
-    age_upto = "-".join([year_of_eligibility, '02', '01'])
+    age_upto = "-".join([year_of_eligibility, month_of_eligibility, '01'])
 
     # print(age_upto)
 
@@ -86,35 +124,54 @@ def get_scores(hicno, sex, dob, year_of_eligibility, RAF_type=None, orec=0, medi
 
         add_diagnosis_code(person, code)
 
-    out_df = []
-
-    pyDatalog.create_terms("Vars")
+    pyDatalog.create_terms("Vars, ScoreVar")
 
     temp_raf_type = raf_type_lookup[RAF_type]
 
     hcc_reg_variables_list = regvars(person, temp_raf_type, Vars)
+
+    t= get_score_variable(temp_raf_type)
+
+    print(t)
+
+    ben_score= score(person,t, ScoreVar)
+
+    print(ben_score)
+
+    out_df= {}
+
+    out_df['RAF_TYPE']= RAF_type
 
     if len(hcc_reg_variables_list) > 0:
 
         condition_categories = hcc_reg_variables_list[
             0][0].split(',')
 
-        for temp_category in condition_categories:
+        raf_contribution = get_RAF_contribution(
+            matrix[RAF_type], condition_categories)
 
-            formatted_category = "{}_{}".format(
-                RAF_type.lower(), temp_category.lower())
+        for contribution_type, temp_categories in raf_contribution.items():
 
-            temp_coeff = get_coeff(formatted_category)
+            for e, temp_category_dict in enumerate(temp_categories):
 
-            out_df.append(
-                {formatted_category: temp_coeff})
+                temp_category = list(temp_category_dict.keys()).pop()
+
+                formatted_category = "{}_{}".format(
+                    RAF_type.lower(), temp_category.lower())
+
+                temp_coeff = get_coeff(formatted_category)
+
+                temp_categories[e][temp_category] = temp_coeff
 
         # get condition_category coefficients
 
-        return out_df
+        out_df['raf_contribution']= raf_contribution
 
     else:
-        []
+        out_df['raf_contribution']= template.copy()
+
+    
+    return out_df
 
 
 def add_diagnosis_code(Beneficiary, code):

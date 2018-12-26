@@ -13,7 +13,7 @@ def HCCV22_list79():
 
 
 def AGESEXVA():
-    #age/sex variables for Community Aged regression
+    # age/sex variables for Community Aged regression
     return ["F65_69", "F70_74", "F75_79", "F80_84", "F85_89", "F90_94", "F95_GT",
             "M65_69", "M70_74", "M75_79", "M80_84", "M85_89", "M90_94", "M95_GT"]
 
@@ -105,21 +105,68 @@ def NE_REG():
             'MCAID_ORIGDIS_NEF85_89', 'MCAID_ORIGDIS_NEF90_94', 'MCAID_ORIGDIS_NEF95_GT',   'MCAID_ORIGDIS_NEM65', 'MCAID_ORIGDIS_NEM66', 'MCAID_ORIGDIS_NEM67',
             'MCAID_ORIGDIS_NEM68', 'MCAID_ORIGDIS_NEM69', 'MCAID_ORIGDIS_NEM70_74', 'MCAID_ORIGDIS_NEM75_79', 'MCAID_ORIGDIS_NEM80_84', 'MCAID_ORIGDIS_NEM85_89', 'MCAID_ORIGDIS_NEM90_94', 'MCAID_ORIGDIS_NEM95_GT']
 
-    
+
 ##############################################################################
 
 def community_regression_aged():
     # variables for Community Aged regressions
-    return [] + AGESEXVA()+ ORIG_INT() + HCCV22_list79() + INTERRACC_VARSA()
+    return [] + AGESEXVA() + ORIG_INT() + HCCV22_list79() + INTERRACC_VARSA()
+
 
 def community_regression_disabled():
     # variables for Community Disabled regressions
-    return [] + AGESEXVA()+ HCCV22_list79()+ INTERRACC_VARSD()
+    return [] + AGESEXVA() + HCCV22_list79() + INTERRACC_VARSD()
+
 
 def institutional_regression():
     # variables for Institutional regression;
-    return [] + AGESEXV()+ INTERRACI_VARS()+ HCCV22_list79()+ ["LTIMCAID","ORIGDS"]
+    return [] + AGESEXV() + INTERRACI_VARS() + HCCV22_list79() + ["LTIMCAID", "ORIGDS"]
+
 
 def new_enrollee_regression():
     # variables for New Enrollee and SNP New Enrollee regression
-    return []+ NE_REG()
+    return [] + NE_REG()
+
+##############################################################################
+
+
+def get_age_entitlement_diag_vars():
+
+    temp_dict= {
+
+        ("CFA", "CNA", "CPA"): {
+            "age": AGESEXVA(),
+            "entl": [] + ORIG_INT() + INTERRACC_VARSA(),
+            'diag': HCCV22_list79()
+        },
+
+        ("CFD", "CND", "CPD"): {
+            "age": AGESEXVA(),
+            "entl": INTERRACC_VARSA(),
+            'diag': HCCV22_list79()
+        },
+
+        ("NE", "SNPE"): {
+            "age": [],
+            "entl": NE_REG(),
+            'diag': []
+        },
+
+        "INS": {
+            "age": AGESEXVA(),
+            "entl": []+INTERRACI_VARS()+ ["LTIMCAID", "ORIGDS"],
+            'diag': HCCV22_list79()
+        }
+    }
+
+    out_dict= {}
+
+
+    for k,v in temp_dict.items():
+        if type(k)==tuple :
+            for e in k:
+                out_dict[e]= v
+        else:
+            out_dict[k]= v
+
+    return out_dict
