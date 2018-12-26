@@ -140,3 +140,40 @@ def functioning_graft_institutional_regression():
 def functioning_graft_new_enrolle_regression():
     # Variables for Functioning Graft New Enrollee regression
     return []+ NE_AGESEX()+ DEMOG_INTERACT_GRAFT_NE()
+
+##############################################################################
+
+def get_age_entitlement_diag_vars():
+    return {
+
+        "DI": {
+            "age": ageSEX_1(),
+            "entl": []+  moas_1() + oe()+ did()+ ddc(),
+            'diag': HCCV21_list87()
+        } ,
+
+        "DNE": {
+            "age": AGESEX_DIAL_NE(),
+            "entl": MOAS_DIAL_NE(),
+            'diag': []  
+        },
+
+        "GC": {
+            "age": ageSEX_1(),
+            "entl": []+  moas_1() + dic()+ ddc() ,
+            'diag': HCCV21_list87()
+        },
+
+        "GI": {
+            "age": NE_AGESEX(),
+            "entl": DEMOG_INTERACT_GRAFT_NE() ,
+            'diag': []
+        },
+
+        "GNE":{
+            "age": AGESEX_DIAL_NE(),
+            "entl": MOAS_DIAL_NE(),
+            'diag': [] 
+        }
+
+    }

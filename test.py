@@ -3,14 +3,16 @@ import handler
 
 def main():
     out = handler.get_scores(hicno='1906072835999',
-                                sex= 'M',
-                                dob= '1956-03-16',
-                                year_of_eligibility= '2018',
-                                RAF_type= 'DI',
-                                orec= 1,
-                                medicaid= True,
-                                codes=['I209', 'I70203', 'E119', 'E119', 'E119', 'E119', 'E119']
-                                )
+                             sex='F',
+                             dob='1948-03-16',
+                             month_of_eligibility='02',
+                             year_of_eligibility='2018',
+                             RAF_type='INS',
+                             orec=1,
+                             medicaid=False,
+                             codes=['E119', 'E119', 'E119',
+                                    'E119', 'E119', 'E119', 'E119']
+                             )
 
     print(out)
 
