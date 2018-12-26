@@ -1,16 +1,22 @@
 from pyDatalog import pyDatalog
 import pandas as pd
 
-raf_type_lookup_v22 = {'CFA': 'valid_community_aged_variables', 'CFD': 'valid_community_disabled_variables',
-                       'CNA': 'valid_community_aged_variables', 'CND': 'valid_community_disabled_variables',
-                       'CPA': 'valid_community_aged_variables', 'CPD': 'valid_community_disabled_variables',
-                       'NE': 'valid_new_enrollee_variables', 'SNPE': 'valid_new_enrollee_variables',
-                       'INS': 'valid_institutional_variables'
+raf_type_lookup_v22 = {'CFA': ('valid_community_aged_variables', 'community_full_benefit_dual_aged'),
+                       'CFD': ('valid_community_disabled_variables', 'community_full_benefit_dual_disabled'),
+                       'CNA': ('valid_community_aged_variables', 'community_nondual_aged'),
+                       'CND': ('valid_community_disabled_variables', 'community_nondual_disabled'),
+                       'CPA': ('valid_community_aged_variables', 'community_partial_benefit_dual_aged'),
+                       'CPD': ('valid_community_disabled_variables', 'community_partial_benefit_dual_disabled'),
+                       'NE': ('valid_new_enrollee_variables', 'new_enrollee'),
+                       'SNPE': ('valid_new_enrollee_variables', 'snp_new_enrollee'),
+                       'INS': ('valid_institutional_variables', 'institutional')
                        }
 
-raf_type_lookup_esrd = {'DI': 'valid_dialysis_variables', 'DNE': 'valid_dialysis_new_enrollee_variables',
-                        'GC': 'valid_functioning_graft_community_variables', 'GI': 'valid_functioning_graft_institutional_variables',
-                        'GNE': 'valid_functioning_graft_new_enrolle_regression_variables'
+raf_type_lookup_esrd = {'DI':  ('valid_dialysis_variables', 'dialysis'),
+                        'DNE': ('valid_dialysis_new_enrollee_variables', 'dialysis_new_enrollee'),
+                        'GC':  ('valid_functioning_graft_community_variables', 'functioning_graft_community'),
+                        'GI':  ('valid_functioning_graft_institutional_variables', 'functioning_graft_institutional'),
+                        'GNE': ('valid_functioning_graft_new_enrolle_regression_variables', 'functioning_graft_new_enrolle')
                         }
 
 sex_lookup = {'f': 'female', 'm': 'male'}
@@ -28,8 +34,6 @@ template = {
 
 
 def format_date(date): return ''.join(date.split('-'))
-
-def get_score_variable(a): return "{}".format(a.replace('valid_','').replace('_variables', ''))
 
 
 def get_RAF_contribution(temp_df, var):
@@ -97,8 +101,9 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
         print('coefficients file not found : {}'.format(coefficients_file_path))
 
-    def get_coeff(
-        x): return coefficients_df[coefficients_df['raf_type'] == x].values[0][1]
+    def get_coeff(x):
+        # print(x)
+        return coefficients_df[coefficients_df['raf_type'] == x].values[0][1]
 
     formatted_dob = format_date(dob)
 
@@ -126,21 +131,22 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
     pyDatalog.create_terms("Vars, ScoreVar")
 
-    temp_raf_type = raf_type_lookup[RAF_type]
+    temp_raf_type = raf_type_lookup[RAF_type][0]
 
     hcc_reg_variables_list = regvars(person, temp_raf_type, Vars)
 
-    t= get_score_variable(temp_raf_type)
+    t = raf_type_lookup[RAF_type][1]
 
     print(t)
 
-    ben_score= score(person,t, ScoreVar)
+    ben_score = score(person, t, ScoreVar)
 
-    print(ben_score)
+    # print(ben_score)
 
-    out_df= {}
+    out_df = {}
 
-    out_df['RAF_TYPE']= RAF_type
+    out_df['RAF_TYPE'] = RAF_type
+    out_df['score']= ben_score
 
     if len(hcc_reg_variables_list) > 0:
 
@@ -165,12 +171,11 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
         # get condition_category coefficients
 
-        out_df['raf_contribution']= raf_contribution
+        out_df['raf_contribution'] = raf_contribution
 
     else:
-        out_df['raf_contribution']= template.copy()
+        out_df['raf_contribution'] = template.copy()
 
-    
     return out_df
 
 

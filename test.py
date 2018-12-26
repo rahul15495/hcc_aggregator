@@ -7,7 +7,7 @@ def main():
                              dob='1948-03-16',
                              month_of_eligibility='02',
                              year_of_eligibility='2018',
-                             RAF_type='GI',
+                             RAF_type='INS',
                              orec=1,
                              medicaid=False,
                              codes=['E119', 'E119', 'E119',

@@ -115,7 +115,7 @@ def community_regression_aged():
 
 def community_regression_disabled():
     # variables for Community Disabled regressions
-    return [] + AGESEXVA() + HCCV22_list79() + INTERRACC_VARSD()
+    return [] + AGESEXVD() + HCCV22_list79() + INTERRACC_VARSD()
 
 
 def institutional_regression():
