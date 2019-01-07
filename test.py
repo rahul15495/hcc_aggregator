@@ -1,8 +1,8 @@
-import handler
+import api
 
 
 def main():
-    out = handler.get_scores(hicno='1906072835999',
+    out = api.single_month_score_predcitor(hicno='1906072835999',
                              sex='F',
                              dob='1948-03-16',
                              month_of_eligibility='02',
@@ -13,6 +13,10 @@ def main():
                              codes=['E119', 'E119', 'E119',
                                     'E119', 'E119', 'E119', 'E119']
                              )
+
+    # out = api.aggregate_score_predcitor(hicno='1906072835999',
+    #                                     sex='F',
+    #                                     dob='1948-03-16',)
 
     print(out)
 
