@@ -6,8 +6,8 @@ def main():
                              sex='F',
                              dob='1995-03-16',
                              month_of_eligibility='02',
-                             year_of_eligibility='2019',
-                             RAF_type='CNA',
+                             year_of_eligibility='2018',
+                             RAF_type='GNE',
                              orec=0,
                              medicaid=True,
                              codes=['E1142', 'I83213', 'F3181', 'E46', 'C50911', 'F324',
@@ -43,7 +43,27 @@ def main():
     print(out)
 
     # output
-    # [{'cna_f65_69': 0.312}, {'cna_hcc19': 0.10400000000000001}, {'cna_originallydisabled_female': 0.244}]
+    """
+    {'models':[
+        {'Model':'v23','Payment_Year':'2019','RAF_TYPE':'CNA',
+            'Raf_Contribution':
+            {'Demographic':[],
+            'Clinical':[{'HCC107':0.401},{'HCC11':0.309},{'HCC111':0.335},{'HCC18':0.307},
+                        {'HCC21':0.5539999999999999},{'HCC22':0.262},{'HCC23':0.212},
+                        {'HCC48':0.214},{'HCC84':0.314},{'gRespDepandArre_gCopdCF':0.384}],
+            'Entitlement Class':[]},'Score':3.292},
+        {'Model':'v22','Payment_Year':'2018','RAF_TYPE':'CNA',
+            'Raf_Contribution':
+            {'Demographic':[],
+            'Clinical':[{'HCC107':0.4},{'HCC11':0.301},{'HCC111':0.32799999999999996},
+            {'HCC18':0.318},{'HCC21':0.545},{'HCC22':0.273},{'HCC23':0.228},
+            {'HCC48':0.221},{'HCC58':0.395},{'HCC84':0.302},
+            {'gRespDepandArre_gCopdCF':0.336}],
+            'Entitlement Class':[]},
+            'Score':3.6470000000000002}],
+        'final_score':3.55825
+        }
+    """
 
 
 if __name__ == '__main__':

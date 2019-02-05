@@ -38,6 +38,8 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
     combined_df= []
 
+    combined_score =0
+
     for params in select_model(year_of_eligibility, RAF_type):
         print(params)
 
@@ -131,6 +133,8 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
                 out_df['raf_contribution'][category].append({temp_category: temp_coeff})
 
                 score+= temp_coeff
+            
+            combined_score += score*weight
 
 
         combined_df.append({'Model':model_name.split('_')[0] ,
@@ -139,7 +143,12 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
                         'Raf_Contribution': out_df['raf_contribution'],
                         'Score': score})
 
-    return combined_df
+        pyDatalog.clear()
+
+    final_df = {'models': combined_df, 'final_score': combined_score}
+
+
+    return final_df
 
 
 def add_diagnosis_code(Beneficiary, code):
