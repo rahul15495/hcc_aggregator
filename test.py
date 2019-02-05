@@ -7,7 +7,7 @@ def main():
                              dob='1995-03-16',
                              month_of_eligibility='02',
                              year_of_eligibility='2019',
-                             RAF_type='NE',
+                             RAF_type='CNA',
                              orec=0,
                              medicaid=True,
                              codes=['E1142', 'I83213', 'F3181', 'E46', 'C50911', 'F324',
@@ -32,7 +32,8 @@ def main():
                                         'F339', 'I248', 'J430', 'I4891', 'M069', 'J479', 'J411',
                                         'M869', 'I5022', 'E1136', 'I25119', 'I5030', 'G620',
                                         'I70213', 'G40909', 'I110', 'G20', 'F250', 'I80221'
-                                        'C770', 'I482', 'I130', 'I509', 'I272']                             
+                                        'C770', 'I482', 'I130', 'I509', 'I272',
+                                        'M25511', 'H6123' ,'E785', 'M368', 'N390']                             
                              )
 
     # out = api.aggregate_score_predcitor(hicno='1906072835999',

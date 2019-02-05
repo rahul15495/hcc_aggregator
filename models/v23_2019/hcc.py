@@ -266,7 +266,7 @@ def load_rules():
 	chf_gcopdcf(CC,CC2) <= dc("chf",CC) & dc("gcopdcf",CC2)
 
 	grespdepandarre_gcopdcf(CC,CC2) <= dc("card_resp_fail",CC) & dc("gcopdcf",CC2)
-	# gSubstanceAbuse_gPsychiatric_V23(CC,CC2) <= dc("gsubstanceabuse_v23",CC) & dc("gpsychiatric_v23",CC2)
+	gsubstanceabuse_gpsychiatric_v23(CC,CC2) <= dc("gsubstanceabuse_v23",CC) & dc("gpsychiatric_v23",CC2)
 
 	gcopdcf_card_resp_fail(CC,CC2) <= dc("card_resp_fail",CC) & dc("gcopdcf",CC2)
 

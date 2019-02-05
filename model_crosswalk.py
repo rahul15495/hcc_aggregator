@@ -14,7 +14,7 @@ model_crosswalk= query_dict({'model_crosswalk':[
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
-                'models': [('v22', 0.75, 'v22_2019'), ('v23', 0.25, 'v23_2019')]
+                'models': [('v23', 0.25, 'v23_2019'), ('v22', 0.75, 'v22_2019')]
             },
             {
                 'raf_types': ['DI','DNE','GC','GI','GNE','TRANSPLANT','GE65','LT65'],
