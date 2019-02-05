@@ -2,7 +2,7 @@ from enum import Enum, IntEnum
 from functools import reduce
 from datetime import datetime
 from pyDatalog import pyDatalog
-from esrd.regvars import *
+from models.esrd_2018.regvars import *
 import os
 import pandas as pd
 
@@ -180,7 +180,7 @@ def load_facts():
     load_cc_facts("F2118H1R.TXT", 0)
     load_hcc_facts()
     load_diagnostic_category_facts()
-    load_coefficients("hcccoefn_cleaned.csv")
+    # load_coefficients("hcccoefn_cleaned.csv")
 
 
 def extract_terms(reg_vars):
@@ -557,31 +557,31 @@ def load_rules():
     (valid_functioning_graft_new_enrolle_regression_variables[B] == concat_(
         CC, key=CC, sep=',')) <= indicator(B, CC) & CC.in_(functioning_graft_new_enrolle_regression_vars)
 
-    (dialysis_score[B] == sum_(Coef, key=Coef)) <= indicator(
-        B, CC) & CC.in_(dialysis_regression_vars) & coefficient("DI_"+CC, Coef)
+    # (dialysis_score[B] == sum_(Coef, key=Coef)) <= indicator(
+    #     B, CC) & CC.in_(dialysis_regression_vars) & coefficient("DI_"+CC, Coef)
 
-    (dialysis_new_enrollee_score[B] == sum_(Coef, key=Coef)) <= indicator(
-        B, CC) & CC.in_(dialysis_new_enrollee_regression_vars) & coefficient("DNE_"+CC, Coef)
+    # (dialysis_new_enrollee_score[B] == sum_(Coef, key=Coef)) <= indicator(
+    #     B, CC) & CC.in_(dialysis_new_enrollee_regression_vars) & coefficient("DNE_"+CC, Coef)
 
-    (functioning_graft_community_score[B] == sum_(Coef, key=Coef)) <= indicator(
-        B, CC) & CC.in_(functioning_graft_community_regression_vars) & coefficient("GC_"+CC, Coef)
+    # (functioning_graft_community_score[B] == sum_(Coef, key=Coef)) <= indicator(
+    #     B, CC) & CC.in_(functioning_graft_community_regression_vars) & coefficient("GC_"+CC, Coef)
 
-    (functioning_graft_institutional_score[B] == sum_(Coef, key=Coef)) <= indicator(
-        B, CC) & CC.in_(functioning_graft_institutional_regression_vars) & coefficient("GI_"+CC, Coef)
+    # (functioning_graft_institutional_score[B] == sum_(Coef, key=Coef)) <= indicator(
+    #     B, CC) & CC.in_(functioning_graft_institutional_regression_vars) & coefficient("GI_"+CC, Coef)
 
-    (functioning_graft_new_enrolle_score[B] == sum_(Coef, key=Coef)) <= indicator(
-        B, CC) & CC.in_(functioning_graft_new_enrolle_regression_vars) & coefficient("GNE_"+CC, Coef)
+    # (functioning_graft_new_enrolle_score[B] == sum_(Coef, key=Coef)) <= indicator(
+    #     B, CC) & CC.in_(functioning_graft_new_enrolle_regression_vars) & coefficient("GNE_"+CC, Coef)
 
 
-    score(B, "dialysis", Score) <= (dialysis_score[B] == Score)
-    score(B, "dialysis_new_enrollee", Score) <= (
-        dialysis_new_enrollee_score[B] == Score)
-    score(B, "functioning_graft_community", Score) <= (
-        functioning_graft_community_score[B] == Score)
-    score(B, "functioning_graft_institutional", Score) <= (
-        functioning_graft_institutional_score[B] == Score)
-    score(B, "functioning_graft_new_enrolle", Score) <= (
-        functioning_graft_new_enrolle_score[B] == Score)
+    # score(B, "dialysis", Score) <= (dialysis_score[B] == Score)
+    # score(B, "dialysis_new_enrollee", Score) <= (
+    #     dialysis_new_enrollee_score[B] == Score)
+    # score(B, "functioning_graft_community", Score) <= (
+    #     functioning_graft_community_score[B] == Score)
+    # score(B, "functioning_graft_institutional", Score) <= (
+    #     functioning_graft_institutional_score[B] == Score)
+    # score(B, "functioning_graft_new_enrolle", Score) <= (
+    #     functioning_graft_new_enrolle_score[B] == Score)
 
     regvars(B, "valid_dialysis_variables", Regvars) <= (
         valid_dialysis_variables[B] == Regvars)
