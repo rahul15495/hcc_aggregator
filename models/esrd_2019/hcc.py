@@ -19,6 +19,7 @@ originally_disabled,ben_hcc,sex_age,MF,indicator,excised,beneficiary_icd,CC,B,
 valid_dialysis_new_enrollee_variables, valid_dialysis_variables, valid_functioning_graft_community_variables,
 valid_functioning_graft_institutional_variables, valid_functioning_graft_new_enrolle_regression_variables,
 indicator,ne_origds,nmcaid_norigdis,mcaid_norigdis,nmcaid_origdis,mcaid_origdis,age_upto,
+ne_origds_g,nmcaid_norigdis_g,mcaid_norigdis_g,nmcaid_origdis_g,mcaid_origdis_g,
 dialysis_score,dialysis_new_enrollee_score,functioning_graft_community_score,
 functioning_graft_institutional_score, functioning_graft_new_enrolle_score,ScoreVar
 """)
@@ -324,6 +325,15 @@ def load_rules():
 	nmcaid_origdis(B) <= ~(new_enrollee(B)) & (ne_origds(B))
 	mcaid_origdis(B) <= (new_enrollee(B)) & (ne_origds(B))
 
+	#Funcioning Graft NE
+	ne_origds_g(B) <= age_range(
+		B, 65, -1.0) & (Ben.original_reason_entitlement[B] == EntitlementReason.DIB)
+	nmcaid_norigdis_g(B) <= ~(new_enrollee(B)) & ~(ne_origds_g(B))
+	mcaid_norigdis_g(B) <= (new_enrollee(B)) & ~(ne_origds_g(B))
+	nmcaid_origdis_g(B) <= ~(new_enrollee(B)) & (ne_origds_g(B))
+	mcaid_origdis_g(B) <= (new_enrollee(B)) & (ne_origds_g(B))
+
+
 	indicator(B, 'ORIGDS') <= originally_disabled(B)
 
 	indicator(B, 'ART_OPENINGS_PRESSURE_ULCER') <= ben_hcc(
@@ -452,77 +462,6 @@ def load_rules():
 	indicator(B, 'Originally_ESRD_Male') <= ((Ben.original_reason_entitlement[B] == EntitlementReason.ESRD) or (
 		Ben.original_reason_entitlement[B] == EntitlementReason.DIB_AND_ESRD)) & male(B) & age_range(B, 65, -1.0)
 
-	# indicator(B, 'NEMedicaid_Female_Aged') <= new_enrollee(
-	#     B) & female(B) & ~disabled(B)
-	# indicator(B, 'NEMedicaid_Female_NonAged') <= new_enrollee(
-	#     B) & female(B) & disabled(B)
-	# indicator(B, 'NEMedicaid_Male_Aged') <= new_enrollee(
-	#     B) & male(B) & ~disabled(B)
-	# indicator(B, 'NEMedicaid_Male_NonAged') <= new_enrollee(
-	#     B) & male(B) & disabled(B)
-
-	# indicator(B, 'MCAID_female0_64') <= medicaid(
-	#     B) & sex_age_range('female', B, 0, 64)
-	# indicator(B, 'MCAID_female65') <= medicaid(B) & sex_age('female', B, 65)
-	# indicator(B, 'MCAID_female66_69') <= medicaid(
-	#     B) & sex_age_range('female', B, 66, 69)
-	# indicator(B, 'MCAID_female70_74') <= medicaid(
-	#     B) & sex_age_range('female', B, 70, 74)
-	# indicator(B, 'MCAID_female75_GT') <= medicaid(
-	#     B) & sex_age_range('female', B, 75, -1.0)
-	# indicator(B, 'MCAID_male0_64') <= medicaid(
-	#     B) & sex_age_range('male', B, 0, 64)
-	# indicator(B, 'MCAID_male65') <= medicaid(B) & sex_age('male', B, 65)
-	# indicator(B, 'MCAID_male66_69') <= medicaid(
-	#     B) & sex_age_range('male', B, 66, 69)
-	# indicator(B, 'MCAID_male70_74') <= medicaid(
-	#     B) & sex_age_range('male', B, 70, 74)
-	# indicator(B, 'MCAID_male75_GT') <= medicaid(
-	#     B) & sex_age_range('male', B, 75, -1.0)
-
-	# indicator(B, 'OrigDis_Female_GE65') <= originally_disabled(
-	#     B) & indicator(B, 'NEF65')
-	# indicator(B, 'OrigDis_Male_GE65') <= originally_disabled(
-	#     B) & indicator(B, 'NEM65')
-
-	# indicator(B, 'OrigDis_Female_LT65') <= originally_disabled(
-	#     B) & female(B) & age_range(B, 0, 65)
-
-	# indicator(B, 'Origdis_female65') <= originally_disabled(
-	#     B) & indicator(B, 'NEF65')
-	# indicator(B, 'OrigDis_Male_LT65') <= originally_disabled(
-	#     B) & male(B) & age_range(B, 0, 65)
-
-	# indicator(B, 'Origdis_female66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEF66')
-	# indicator(B, 'Origdis_female66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEF67')
-	# indicator(B, 'Origdis_female66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEF68')
-	# indicator(B, 'Origdis_female66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEF69')
-
-	# indicator(B, 'Origdis_female70_74') <= originally_disabled(
-	#     B) & indicator(B, 'NEF70_74')
-	# indicator(B, 'Origdis_female75_GT') <= originally_disabled(
-	#     B) & sex_age_range("female", B, 74, -1.0)
-
-	# indicator(B, 'Origdis_male65') <= originally_disabled(
-	#     B) & indicator(B, 'NEM65')
-
-	# indicator(B, 'Origdis_male66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEM66')
-	# indicator(B, 'Origdis_male66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEM67')
-	# indicator(B, 'Origdis_male66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEM68')
-	# indicator(B, 'Origdis_male66_69') <= originally_disabled(
-	#     B) & indicator(B, 'NEM69')
-
-	# indicator(B, 'Origdis_male70_74') <= originally_disabled(
-	#     B) & indicator(B, 'NEM70_74')
-	# indicator(B, 'Origdis_male75_GT') <= originally_disabled(
-	#     B) & sex_age_range("male", B, 74, -1.0)
 
 
 	indicator(B, 'SCHIZOPHRENIA_CHF') <= ben_hcc(
@@ -546,6 +485,23 @@ def load_rules():
 	functioning_graft_community_regression_vars = functioning_graft_community_regression()
 	functioning_graft_institutional_regression_vars = functioning_graft_institutional_regression()
 	functioning_graft_new_enrolle_regression_vars = functioning_graft_new_enrolle_regression()
+
+	def set_indictaor(a,b):
+		sa=str(a).upper()
+		indicator(B, '{}_{}'.format(sa,b)) <= a(B) & indicator(B, b)
+	
+	for i in NE_AGESEXV():
+		#ne
+		set_indictaor(nmcaid_norigdis,i)
+		set_indictaor(mcaid_norigdis,i)
+		set_indictaor(nmcaid_origdis,i)
+		set_indictaor(mcaid_origdis,i)
+
+		#graft ne
+		set_indictaor(nmcaid_norigdis_g,i)
+		set_indictaor(mcaid_norigdis_g,i)
+		set_indictaor(nmcaid_origdis_g,i)
+		set_indictaor(mcaid_origdis_g,i)
 
 	allvars = list(set().union(dialysis_regression_vars,
 							   dialysis_new_enrollee_regression_vars,
