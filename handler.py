@@ -1,183 +1,155 @@
 from pyDatalog import pyDatalog
+from model_crosswalk import select_model
+import traceback
 import pandas as pd
+import importlib
 
-raf_type_lookup_v22 = {'CFA': ('valid_community_aged_variables', 'community_full_benefit_dual_aged'),
-                       'CFD': ('valid_community_disabled_variables', 'community_full_benefit_dual_disabled'),
-                       'CNA': ('valid_community_aged_variables', 'community_nondual_aged'),
-                       'CND': ('valid_community_disabled_variables', 'community_nondual_disabled'),
-                       'CPA': ('valid_community_aged_variables', 'community_partial_benefit_dual_aged'),
-                       'CPD': ('valid_community_disabled_variables', 'community_partial_benefit_dual_disabled'),
-                       'NE': ('valid_new_enrollee_variables', 'new_enrollee'),
-                       'SNPE': ('valid_new_enrollee_variables', 'snp_new_enrollee'),
-                       'INS': ('valid_institutional_variables', 'institutional')
-                       }
-
-raf_type_lookup_esrd = {'DI':  ('valid_dialysis_variables', 'dialysis'),
+raf_type_lookup = {'CFA': ('valid_community_aged_variables', 'community_full_benefit_dual_aged'),
+                        'CFD': ('valid_community_disabled_variables', 'community_full_benefit_dual_disabled'),
+                        'CNA': ('valid_community_aged_variables', 'community_nondual_aged'),
+                        'CND': ('valid_community_disabled_variables', 'community_nondual_disabled'),
+                        'CPA': ('valid_community_aged_variables', 'community_partial_benefit_dual_aged'),
+                        'CPD': ('valid_community_disabled_variables', 'community_partial_benefit_dual_disabled'),
+                        'NE': ('valid_new_enrollee_variables', 'new_enrollee'),
+                        'SNPE': ('valid_new_enrollee_variables', 'snp_new_enrollee'),
+                        'INS': ('valid_institutional_variables', 'institutional'),
+                        'DI':  ('valid_dialysis_variables', 'dialysis'),
                         'DNE': ('valid_dialysis_new_enrollee_variables', 'dialysis_new_enrollee'),
                         'GC':  ('valid_functioning_graft_community_variables', 'functioning_graft_community'),
                         'GI':  ('valid_functioning_graft_institutional_variables', 'functioning_graft_institutional'),
-                        'GNE': ('valid_functioning_graft_new_enrolle_regression_variables', 'functioning_graft_new_enrolle')
+                        'GNE': ('valid_functioning_graft_new_enrolle_regression_variables', 'functioning_graft_new_enrolle'),
+                        'CE': ('valid_community_variables','community')
                         }
 
 sex_lookup = {'f': 'female', 'm': 'male'}
 
-coefficients_file_path_v22 = 'v22/hcc_coefficients_cleaned.csv'
 
-coefficients_file_path_esrd = "esrd/hcccoefn_cleaned.csv"
-
-template = {
-    'age': [],
-    'entl': [],
-    'diag': [],
-    'none': []
-}
 
 
 def format_date(date): return ''.join(date.split('-'))
 
 
-def get_RAF_contribution(temp_df, var):
-
-    out = template.copy()
-
-    for i in var:
-
-        if i in temp_df['age']:
-
-            out['age'].append({i: None})
-
-        elif i in temp_df['entl']:
-
-            out['entl'].append({i: None})
-
-        elif i in temp_df['diag']:
-
-            out['diag'].append({i: None})
-
-        else:
-
-            out['none'].append({i: None})
-
-    return out
-
 
 def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_type=None, orec=0, medicaid=True, codes=[]):
 
-    global Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, raf_type_lookup, get_age_entitlement_diag_vars, ScoreVar
+    global model
 
     RAF_type = RAF_type.upper()
 
-    if RAF_type in raf_type_lookup_v22.keys():
+    combined_df= []
 
-        from v22.hcc import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, ScoreVar
-        from v22.regvars import get_age_entitlement_diag_vars
+    combined_score =0
 
-        coefficients_file_path = coefficients_file_path_v22
+    for params in select_model(year_of_eligibility, RAF_type):
+        print(params)
 
-        raf_type_lookup = raf_type_lookup_v22
+        try:
+            _, weight, model_name , coefficients_file_path = params
 
-    elif RAF_type in raf_type_lookup_esrd.keys():
+            model= importlib.import_module("models.{}.hcc".format(model_name))
 
-        from esrd.hcc_esrd import Diagnosis, Beneficiary, ICDType, score, regvars, EntitlementReason, Vars, ScoreVar
-        from esrd.regvars import get_age_entitlement_diag_vars
 
-        coefficients_file_path = coefficients_file_path_esrd
+        except:
+            print("invalid RAF_type: {}".format(RAF_type))
+            print(traceback.format_exc())
+            return
+        
+        try:
+            coefficients_df = pd.read_csv(
+                coefficients_file_path, names=['raf_type', 'coeff', 'contribution_category'])
 
-        raf_type_lookup = raf_type_lookup_esrd
+            coefficients_df['raf_type']= coefficients_df['raf_type'].str.upper()
 
-    else:
-        print("invalid RAF_type: {}".format(RAF_type))
-        return
+            # print(coefficients_df.head())
 
-    try:
-        coefficients_df = pd.read_csv(
-            coefficients_file_path, names=['raf_type', 'coeff'])
+        except:
 
-        matrix = get_age_entitlement_diag_vars()
+            print('coefficients file not found : {}'.format(coefficients_file_path))
 
-        # print(coefficients_df.head())
+        def get_coeff(x):
+            # print(x)
+            temp =coefficients_df[coefficients_df['raf_type'] == x].values[0]
 
-    except:
+            return temp[2], temp[1]
 
-        print('coefficients file not found : {}'.format(coefficients_file_path))
+        formatted_dob = format_date(dob)
 
-    def get_coeff(x):
-        # print(x)
-        return coefficients_df[coefficients_df['raf_type'] == x].values[0][1]
+        age_upto = "-".join([year_of_eligibility, month_of_eligibility, '01'])
 
-    formatted_dob = format_date(dob)
+        # print(age_upto)
 
-    age_upto = "-".join([year_of_eligibility, month_of_eligibility, '01'])
+        formatted_age_upto = format_date(age_upto)
 
-    # print(age_upto)
+        formatted_sex = sex_lookup[sex.lower()]
 
-    formatted_age_upto = format_date(age_upto)
+        if orec not in [0, 1, 2, 3]:
+            print("invaild original_reason_entitlement : {}".format(orec))
+            return
 
-    formatted_sex = sex_lookup[sex.lower()]
+        else:
+            temp_orec = orec
 
-    if orec not in [0, 1, 2, 3]:
-        print("invaild original_reason_entitlement : {}".format(orec))
-        return
+            person = model.Beneficiary(hicno=hicno, sex=formatted_sex, dob=formatted_dob,
+                                age_upto=formatted_age_upto, original_reason_entitlement=temp_orec, medicaid=medicaid, )
 
-    else:
-        temp_orec = orec
+        for code in codes:
 
-        person = Beneficiary(hicno=hicno, sex=formatted_sex, dob=formatted_dob,
-                             age_upto=formatted_age_upto, original_reason_entitlement=temp_orec, medicaid=medicaid, )
+            add_diagnosis_code(person, code)
 
-    for code in codes:
+        pyDatalog.create_terms("Vars, ScoreVar")
 
-        add_diagnosis_code(person, code)
+        temp_raf_type = raf_type_lookup[RAF_type][0]
 
-    pyDatalog.create_terms("Vars, ScoreVar")
+        hcc_reg_variables_list = model.regvars(person, temp_raf_type, model.Vars)
 
-    temp_raf_type = raf_type_lookup[RAF_type][0]
 
-    hcc_reg_variables_list = regvars(person, temp_raf_type, Vars)
+        t = raf_type_lookup[RAF_type][1]
 
-    t = raf_type_lookup[RAF_type][1]
 
-    # print(t)
+        out_df = {}
 
-    ben_score = score(person, t, ScoreVar)
+        out_df['RAF_TYPE'] = RAF_type
+        out_df['raf_contribution']= {
+            'Demographic': [],
+            'Clinical': [],
+            'Entitlement Class': []
+        }
 
-    # print(ben_score)
+        score= 0
+        if len(hcc_reg_variables_list) > 0:
 
-    out_df = {}
+            condition_categories = hcc_reg_variables_list[
+                0][0].split(',')
 
-    out_df['RAF_TYPE'] = RAF_type
-    out_df['score']= ben_score.pop()[0]
 
-    if len(hcc_reg_variables_list) > 0:
 
-        condition_categories = hcc_reg_variables_list[
-            0][0].split(',')
-
-        raf_contribution = get_RAF_contribution(
-            matrix[RAF_type], condition_categories)
-
-        for contribution_type, temp_categories in raf_contribution.items():
-
-            for e, temp_category_dict in enumerate(temp_categories):
-
-                temp_category = list(temp_category_dict.keys()).pop()
+            for temp_category in condition_categories:
 
                 formatted_category = "{}_{}".format(
-                    RAF_type.lower(), temp_category.lower())
+                    RAF_type, temp_category.upper())
 
-                temp_coeff = get_coeff(formatted_category)
+                category,temp_coeff = get_coeff(formatted_category)
 
-                temp_categories[e][temp_category] = temp_coeff
+                out_df['raf_contribution'][category].append({temp_category: temp_coeff})
 
-        # get condition_category coefficients
+                score+= temp_coeff
+            
+            combined_score += score*weight
 
-        out_df['raf_contribution'] = raf_contribution
 
-    else:
-        out_df['raf_contribution'] = template.copy()
+        combined_df.append({'Model':model_name.split('_')[0] ,
+                        'Payment_Year':model_name.split('_')[1],
+                        'RAF_TYPE': out_df['RAF_TYPE'],
+                        'Raf_Contribution': out_df['raf_contribution'],
+                        'Score': score})
 
-    return out_df
+        pyDatalog.clear()
+
+    final_df = {'models': combined_df, 'final_score': combined_score}
+
+
+    return final_df
 
 
 def add_diagnosis_code(Beneficiary, code):
-    Beneficiary.add_diagnosis(Diagnosis(Beneficiary, code, ICDType.TEN))
+    Beneficiary.add_diagnosis(model.Diagnosis(Beneficiary, code, model.ICDType.TEN))

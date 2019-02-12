@@ -1,4 +1,4 @@
-import handler
+import handler as handler
 
 def single_month_score_predcitor(**kwargs):
 

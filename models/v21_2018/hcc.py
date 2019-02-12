@@ -4,7 +4,7 @@ from datetime import datetime
 from pyDatalog import pyDatalog
 import os
 import pandas as pd
-from v22.regvars import *
+from models.v21_2018.regvars import *
 
 pyDatalog.create_terms("""
 Vars, ScoreVar, regvars,Regvars,output,Col,Val,score_em,Score,score,Scores,NE,INS,institutional_score,age_range,
@@ -12,16 +12,17 @@ new_enrollee_score,Pair,Coef,coefficient,b,dc,overrides,wrap,
 has_cc_that_overrides_this_one,beneficiary_has_hcc,Type,OT,beneficiary_has_cc,cc,CC,CC2,
 ICD,edit,male,B,Diag,Ben,female,medicaid,age,A,old_age_entitled,new_enrollee,D,ben_hcc,
 sepsis_pressure_ulcer, sepsis_artif_openings,art_openings_pressure_ulcer, diabetes_chf,
-gcopdcf_asp_spec_bact_pneum,asp_spec_bact_pneum_pres_ulc, sepsis_asp_spec_bact_pneum,
+gcopdcf_asp_spec_bact_pneum,asp_spec_bact_pneum_pres_ulc, sepsis_asp_spec_bact_pneum,sepsis_card_resp_fail,
+cancer_immune,chf_copd,chf_renal,copd_card_resp_fail,copd_asp_spec_bact_pneum,schizophrenia_copd,
 schizophrenia_gcopdcf,schizophrenia_chf,schizophrenia_seizures,sex_age_range,U,L,disabled,
 originally_disabled,ben_hcc,sex_age,MF,indicator,excised,beneficiary_icd,CC,B,
-valid_community_aged_variables,valid_community_disabled_variables,valid_institutional_variables,
+valid_community_variables,valid_institutional_variables,
 valid_new_enrollee_variables,indicator,grespdepandarre_gcopdcf,hcc85_gdiabetesmellit,
 chf_gcopdcf,gsubstanceabuse_gpsychiatric, gcopdcf_card_resp_fail, hcc47_gcancer,hcc85_grenal,hcc85_gcopdcf,
 ne_origds,nmcaid_norigdis,mcaid_norigdis,nmcaid_origdis,mcaid_origdis,community_nondual_aged_score,
-community_nondual_disabled_score, community_full_benefit_dual_aged_score,community_full_benefit_dual_disabled_score,
-community_partial_benefit_dual_aged_score, community_partial_benefit_dual_disabled_score,snp_new_enrollee_score,
-CNA, CND, CFA, CFD, CPA, CPD, SNPNE,age_upto
+community_full_benefit_dual_aged_score,community_full_benefit_dual_disabled_score,
+community_score, community_partial_benefit_dual_disabled_score,snp_new_enrollee_score,
+CE, CFA, CFD, CPA, CPD,age_upto
 """)
 pyDatalog.create_terms("X,Y,Z")
 
@@ -84,14 +85,14 @@ def load_diagnostic_category_facts():
 	diagnostic_categories = [
 					("cancer",["8","9","10","11","12"]),
 					("diabetes",["17","18","19"]),
+					("immune",["47"]),
 					("card_resp_fail",["82","83","84"]),
 					("chf",["85"]),
-					("renal",["134","135","136","137"]),
-					("pressure_ulcer",["157","158"]),
+					("renal",["134","135","136","137", "138", "139", "140","141"]),
+					("pressure_ulcer",["157","158","159","160"]),
+					("compl", ["176"]),
 					("sepsis",["2"]),
-					("gcopdcf", ["110", "111", "112"]),
-					("gsubstanceabuse", ["54","55"]),
-					("gpsychiatric", ["57","58"]) ]
+					("copd", ["110", "111"]) ]
 
 	for dcE, ccs in diagnostic_categories:
 		for ccE in ccs:
@@ -103,7 +104,7 @@ def load_coefficients(f):
 	df = pd.read_csv(os.path.join(dir,f),header=None)
 
 	for row in df.iterrows():
-		label,coeff = row[1]
+		label,coeff,_ = row[1]
 		label=label.upper()
 		coeff= float(coeff)
 		+ coefficient(label,coeff) 
@@ -131,6 +132,7 @@ def load_hcc_facts():
 					("27",["28","29","80" ]),
 					("28",["29" ]),
 					("46",["48" ]),
+					("51", ["52"]),
 					("54",["55" ]),
 					("57",["58" ]),
 					("70",["71","72","103","104","169" ]),
@@ -147,11 +149,16 @@ def load_hcc_facts():
 					("110",["111","112" ]),
 					("111",["112" ]),
 					("114",["115" ]),
-					("134",["135","136","137"]),
-					("135",["136","137" ]),
-					("136",["137"]),
-					("157",["158","161" ]),
-					("158",["161" ]),
+					("134",["135","136","137","138","139","140","141"]),
+					("135",["136","137" ,"138","139","140","141"]),
+					("136",["137","138","139","140","141"]),
+					("138", ["139","140","141"]),
+					("139",["140","141"]),
+					("140", ["141"]),
+					("157",["158","159","160","161" ]),
+					("158",["159","160","161" ]),
+					("159", ["160","161"]),
+					("160", ["161"]),
 					("166",["80","167" ])
 					]
 	for overrider, overridees in overriders:
@@ -160,10 +167,10 @@ def load_hcc_facts():
 
 def load_facts():
 	
-	load_cc_facts("F2218O1P.TXT",0)
+	load_cc_facts("F2118H1R.TXT",0)
 	load_hcc_facts()
 	load_diagnostic_category_facts()
-	load_coefficients("hcc_coefficients_cleaned.csv")
+	# load_coefficients("hcc_coefficients_cleaned.csv")
 
 
 def extract_terms(reg_vars):
@@ -218,7 +225,7 @@ def load_rules():
 
 	male(B) <=  (Ben.sex[B] == "male")
 	female(B) <=  (Ben.sex[B] == "female")
-	medicaid(B) <= (Ben.medicaMCAID_Female_Agedid[B] == True)
+	medicaid(B) <= (Ben.medicaid[B] == True)
 	age(B,A) <= (Ben.age[B] == A)
 	old_age_entitled(B) <= (Ben.original_reason_entitlement[B] == EntitlementReason.OASI)
 	new_enrollee(B)  <= (Ben.newenrollee_medicaid[B] == True)
@@ -230,20 +237,19 @@ def load_rules():
 	#    ORIGDS  = (&OREC = '1')*(DISABL = 0);
 	originally_disabled(B) <= (Ben.original_reason_entitlement[B] == EntitlementReason.DIB) & ~(disabled(B))
 
-	edit(ICD,9,B,"48")  <= female(B) & (ICD.in_(["2860", "2861"]))
-	edit(ICD,9,B,"112") <= age(B,A)  & (A < 18) & \
-															(ICD.in_(["4910", "4911", "49120", "49121", "49122",
-																				"4918", "4919", "4920",  "4928",  "496",  
-																				"5181", "5182"]))
+
 	edit(ICD,0,B,"48")  <= female(B) & (ICD.in_(["D66", "D67"]))
 	edit(ICD,0,B,"112") <= age(B,A)  & (A < 18) & (ICD.in_(["J410", 
-																 "J411", "J418", "J42",  "J430",
-																 "J431", "J432", "J438", "J439", "J440",
-																 "J441", "J449", "J982", "J983"]))
+									"J411", "J418", "J42",  "J430",
+									"J431", "J432", "J438", "J439", "J440",
+									"J441", "J449", "J982", "J983"]))
 
-	#IF &AGE < 18 AND &ICD9 IN ("49320", "49321", "49322") 
-	#                                           THEN CC="-1.0";
-	excised(ICD,9,B) <= age(B,A)  & (A < 18) & (ICD.in_(["49320", "49321", "49322"]))
+	#ELSE 
+	#IF (&AGE < 6 OR &AGE > 18) AND &ICD10 = "F3481"
+	#                                         THEN CC="-1.0";
+
+	excised(ICD,10,B) <= age(B,A)  & (A < 6) & (ICD.in_(["F3481"]))
+	excised(ICD,10,B) <= age(B,A)  & (A > 18) & (ICD.in_(["F3481"]))
 
 	beneficiary_icd(B,ICD,Type) <= (Diag.beneficiary[D] == B) & (Diag.icdcode[D]==ICD) & (Diag.codetype[D]==Type) 
 	beneficiary_has_cc(B,CC) <= beneficiary_icd(B,ICD,Type)  & edit(ICD,Type,B,CC) & ~(excised(ICD,Type,B))
@@ -256,35 +262,22 @@ def load_rules():
 	ben_hcc(B,CC) <= beneficiary_has_hcc(B,CC)
 
 	# lines 363 - 368
-	#sepsis_card_resp_fail(CC,CC2) <= dc("sepsis",CC) & dc("card_resp_fail",CC2)
-	#cancer_immune(CC,CC2) <= dc("cancer",CC) & dc("immune",CC2)
-	#diabetes_chf(CC,CC2) <= dc("diabetes",CC) & dc("chf",CC2)
-	#chf_copd(CC,CC2) <= dc("chf",CC) & dc("copd",CC2)
-	#chf_renal(CC,CC2) <= dc("chf",CC) & dc("renal",CC2)
-	#copd_card_resp_fail(CC,CC2) <= dc("copd",CC) & dc("card_resp_fail",CC2)
+	sepsis_card_resp_fail(CC,CC2) <= dc("sepsis",CC) & dc("card_resp_fail",CC2)
+	cancer_immune(CC,CC2) <= dc("cancer",CC) & dc("immune",CC2)
+	diabetes_chf(CC,CC2) <= dc("diabetes",CC) & dc("chf",CC2)
+	chf_copd(CC,CC2) <= dc("chf",CC) & dc("copd",CC2)
+	chf_renal(CC,CC2) <= dc("chf",CC) & dc("renal",CC2)
+	copd_card_resp_fail(CC,CC2) <= dc("copd",CC) & dc("card_resp_fail",CC2)
 
-	chf_gcopdcf(CC,CC2) <= dc("chf",CC) & dc("gcopdcf",CC2)
-
-	grespdepandarre_gcopdcf(CC,CC2) <= dc("card_resp_fail",CC) & dc("gcopdcf",CC2)
-	gsubstanceabuse_gpsychiatric(CC,CC2) <= dc("gsubstanceabuse",CC) & dc("gpsychiatric",CC2)
-
-	gcopdcf_card_resp_fail(CC,CC2) <= dc("card_resp_fail",CC) & dc("gcopdcf",CC2)
-
-	#PRESSURE_ULCER = MAX(HCC157, HCC158)
-	hcc47_gcancer(CC,"47") <= dc("cancer",CC)
-	hcc85_gdiabetesmellit(CC,"85") <= dc("diabetes",CC)
-	hcc85_gcopdcf(CC,"85") <= dc("gcopdcf",CC)
-	hcc85_grenal(CC,"85") <= dc("renal",CC)
-
-
+	# PRESSURE_ULCER = MAX(HCC157, HCC158, HCC159, HCC160);
 	sepsis_pressure_ulcer(CC,CC2) <= dc("sepsis",CC) & dc("pressure_ulcer",CC2) 
 	sepsis_artif_openings(CC,"188") <= dc("sepsis",CC)
 	art_openings_pressure_ulcer(CC,"188") <= dc("pressure_ulcer",CC)
 	diabetes_chf(CC,CC2) <= dc("diabetes",CC) & dc("chf",CC2)
-	gcopdcf_asp_spec_bact_pneum(CC,"114") <= dc("gcopdcf",CC)
+	copd_asp_spec_bact_pneum(CC,"114") <= dc("copd",CC)
 	asp_spec_bact_pneum_pres_ulc(CC,"114") <= dc("pressure_ulcer",CC)
 	sepsis_asp_spec_bact_pneum(CC,"114") <= dc("sepsis",CC)
-	schizophrenia_gcopdcf(CC,"57") <= dc("gcopdcf",CC)
+	schizophrenia_copd(CC,"57") <= dc("copd",CC)
 	schizophrenia_chf(CC,"57") <= dc("chf",CC)
 	schizophrenia_seizures("79",CC) <= (CC == "57")
 
@@ -295,35 +288,26 @@ def load_rules():
 	sex_age_range("male",B,L,U) <= male(B) & age_range(B,L,U)
 	sex_age_range("female",B,L,U) <= female(B) & age_range(B,L,U)
 	sex_age(MF,B,A) <= sex_age_range(MF,B,(A+1),A)
-
-	# NE interactions
-	#line 403- 407
-	ne_origds(B) <= age_range(B,65,-1.0) & (Ben.original_reason_entitlement[B] == EntitlementReason.DIB)
-	nmcaid_norigdis(B) <= ~(new_enrollee(B)) & ~(ne_origds(B))
-	mcaid_norigdis(B) <=  (new_enrollee(B)) & ~(ne_origds(B))
-	nmcaid_origdis(B) <= ~(new_enrollee(B)) & (ne_origds(B))
-	mcaid_origdis(B) <=  (new_enrollee(B)) & (ne_origds(B))
 	
 	indicator(B,'ART_OPENINGS_PRESSURE_ULCER') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & art_openings_pressure_ulcer(CC,CC2)
 	indicator(B,'ASP_SPEC_BACT_PNEUM_PRES_ULC') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & asp_spec_bact_pneum_pres_ulc(CC,CC2)
-	#indicator(B,'CANCER_IMMUNE') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & cancer_immune(CC,CC2)
-	#indicator(B,'CHF_COPD') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & chf_copd(CC,CC2)
-	#indicator(B,'CHF_RENAL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & chf_renal(CC,CC2)
-	indicator(B,"gCopdCF_ASP_SPEC_BACT_PNEUM") <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & gcopdcf_asp_spec_bact_pneum(CC,CC2)
-	#indicator(B,'COPD_CARD_RESP_FAIL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & copd_card_resp_fail(CC,CC2)
+	indicator(B,'CANCER_IMMUNE') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & cancer_immune(CC,CC2)
+	indicator(B,'CHF_COPD') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & chf_copd(CC,CC2)
+	indicator(B,'CHF_RENAL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & chf_renal(CC,CC2)
+	indicator(B,'COPD_ASP_SPEC_BACT_PNEUM') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & copd_asp_spec_bact_pneum(CC,CC2)
+	indicator(B,'COPD_CARD_RESP_FAIL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & copd_card_resp_fail(CC,CC2)
 	indicator(B,'DIABETES_CHF') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & diabetes_chf(CC,CC2)
-	#indicator(B,'DISABLED_HCC110') <=  ben_hcc(B,'110') & disabled(B)
+	indicator(B,'DISABLED_HCC110') <=  ben_hcc(B,'110') & disabled(B)
 	indicator(B,'DISABLED_HCC161') <=  ben_hcc(B,'161') & disabled(B)
-	#indicator(B,'DISABLED_HCC176') <=  ben_hcc(B,'176') & disabled(B)
-	#indicator(B,'DISABLED_HCC46') <=  ben_hcc(B,'34') & disabled(B)
+	indicator(B,'DISABLED_HCC176') <=  ben_hcc(B,'176') & disabled(B)
+	indicator(B,'DISABLED_HCC34') <=  ben_hcc(B,'34') & disabled(B)
 	indicator(B,'DISABLED_HCC39') <=  ben_hcc(B,'39') & disabled(B)
-	#indicator(B,'DISABLED_HCC46') <=  ben_hcc(B,'46') & disabled(B)
-	#indicator(B,'DISABLED_HCC54') <=  ben_hcc(B,'54') & disabled(B)
-	#indicator(B,'DISABLED_HCC55') <=  ben_hcc(B,'55') & disabled(B)
-	indicator(B,'DISABLED_HCC6') <=  ben_hcc(B,'6') & disabled(B)
+	indicator(B,'DISABLED_HCC46') <=  ben_hcc(B,'46') & disabled(B)
+	indicator(B,'DISABLED_HCC54') <=  ben_hcc(B,'54') & disabled(B)
+	indicator(B,'DISABLED_HCC55') <=  ben_hcc(B,'55') & disabled(B)
 	indicator(B,'DISABLED_HCC77') <=  ben_hcc(B,'77') & disabled(B)
 	indicator(B,'DISABLED_HCC85') <=  ben_hcc(B,'85') & disabled(B)
-	indicator(B,'DISABLED_HCC85') <=  ben_hcc(B,CC) & dc(CC,'pressure_ulcer') & disabled(B)
+	indicator(B,'DISABLED_PRESSURE_ULCER') <=  ben_hcc(B,CC) & dc(CC,'pressure_ulcer') & disabled(B)
 	indicator(B,'F0_34') <=  sex_age_range('female',B,0,34)
 	indicator(B,'F35_44') <=  sex_age_range('female',B,35,44)
 	indicator(B,'F45_54') <=  sex_age_range('female',B,45,54)
@@ -336,18 +320,23 @@ def load_rules():
 	indicator(B,'F85_89') <=  sex_age_range('female',B,85,89)
 	indicator(B,'F90_94') <=  sex_age_range('female',B,90,94)
 	indicator(B,'F95_GT') <=  sex_age_range('female',B,95,-1.0)
-	hccees = [ 
-				'100', '103', '104', '106', '107', '108', '10', '110', '111', '112', '114', '115', 
-				'11', '122', '124', '12', '134', '135', '136', '137', '138', '139', '140', '141', 
-				'157', '158', '159', '160', '161', '162', '166', '167', '169', '170', '173', '176', 
-				'17', '186', '188', '189', '18', '19', '1', '21', '22', '23', '27', '28', '29', '2', 
-				'33', '34', '35', '39', '40', '46', '47', '48', '51', '52', '54', '55', '57', '58', 
-				'6', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80', '82', '83', 
-				'84', '85', '86', '87', '88', '8', '96', '99', '9']
-	for i in hccees:
-		indicator(B,'HCC' + i ) <=  ben_hcc(B,i)
-	
 
+	hccees = ['1', '2', '6', '8', '9', '10', '11', '12', '17', '18',
+				'19', '21', '22', '23', '27', '28', '29', '33', '34',
+				'35', '39', '40', '46', '47', '48', '51', '52', '54',
+				'55', '57', '58', '70', '71', '72', '73', '74', '75',
+				'76', '77', '78', '79', '80', '82', '83', '84', '85',
+				'86', '87', '88', '96', '99', '100', '103', '104',
+				'106', '107', '108', '110', '111', '112', '114',
+				'115', '122', '124', '134', '135', '136', '137',
+				'138', '139', '140', '141', '157', '158', '159',
+				'160', '161', '162', '166', '167', '169', '170',
+				'173', '176', '186', '188', '189']
+
+	for i in hccees:
+		indicator(B,'HCC' + i ) <=  ben_hcc(B,i) 
+
+		
 	indicator(B,'M0_34') <=  sex_age_range('male',B,0,34)
 	indicator(B,'M35_44') <=  sex_age_range('male',B,35,44)
 	indicator(B,'M45_54') <=  sex_age_range('male',B,45,54)
@@ -362,25 +351,23 @@ def load_rules():
 	indicator(B,'M95_GT') <=  sex_age_range('male',B,95,-1.0)
 
 	# THESE NEED TO CHANGE
-	#indicator(B,'MCAID_FEMALE0_64') <= medicaid(B) & sex_age_range('female',B,0,64)
-	#indicator(B,'MCAID_FEMALE65') <=  medicaid(B) & sex_age('female',B,65)
-	#indicator(B,'MCAID_FEMALE66_69') <=  medicaid(B) & sex_age_range('female',B,66,69)
-	#indicator(B,'MCAID_FEMALE70_74') <= medicaid(B) & sex_age_range('female',B,70,74)
-	#indicator(B,'MCAID_FEMALE75_GT') <=  medicaid(B) & sex_age_range('female',B,75,-1.0)
-	#indicator(B,'MCAID_Female_Aged') <=   medicaid(B) & ~disabled(B) & female(B)
-	#indicator(B,'MCAID_Female_Disabled') <=  medicaid(B) & disabled(B) & male(B)
-	#indicator(B,'MCAID') <= medicaid(B) 
-	#indicator(B,'MCAID_MALE0_64') <= medicaid(B) & sex_age_range('male',B,0,64)
-	#indicator(B,'MCAID_MALE65') <=  medicaid(B) & sex_age('male',B,65)
-	#indicator(B,'MCAID_MALE66_69') <=  medicaid(B) & sex_age_range('male',B,66,69)
-	#indicator(B,'MCAID_MALE70_74') <= medicaid(B) & sex_age_range('male',B,70,74)
-	#indicator(B,'MCAID_MALE75_GT') <=  medicaid(B) & sex_age_range('male',B,75,-1.0)
-	#indicator(B,'MCAID_Male_Aged') <=  medicaid(B) & ~disabled(B) & male(B)
-	#indicator(B,'MCAID_Male_Disabled') <=   medicaid(B) & disabled(B) & male(B)
+	indicator(B,'MCAID_FEMALE0_64') <= medicaid(B) & sex_age_range('female',B,0,64)
+	indicator(B,'MCAID_FEMALE65') <=  medicaid(B) & sex_age('female',B,65)
+	indicator(B,'MCAID_FEMALE66_69') <=  medicaid(B) & sex_age_range('female',B,66,69)
+	indicator(B,'MCAID_FEMALE70_74') <= medicaid(B) & sex_age_range('female',B,70,74)
+	indicator(B,'MCAID_FEMALE75_GT') <=  medicaid(B) & sex_age_range('female',B,75,-1.0)
+	indicator(B,'MCAID_Female_Aged') <=   medicaid(B) & ~disabled(B) & female(B)
+	indicator(B,'MCAID_Female_Disabled') <=  medicaid(B) & disabled(B) & male(B)
+	indicator(B,'MCAID') <= medicaid(B) 
+	indicator(B,'MCAID_MALE0_64') <= medicaid(B) & sex_age_range('male',B,0,64)
+	indicator(B,'MCAID_MALE65') <=  medicaid(B) & sex_age('male',B,65)
+	indicator(B,'MCAID_MALE66_69') <=  medicaid(B) & sex_age_range('male',B,66,69)
+	indicator(B,'MCAID_MALE70_74') <= medicaid(B) & sex_age_range('male',B,70,74)
+	indicator(B,'MCAID_MALE75_GT') <=  medicaid(B) & sex_age_range('male',B,75,-1.0)
+	indicator(B,'MCAID_Male_Aged') <=  medicaid(B) & ~disabled(B) & male(B)
+	indicator(B,'MCAID_Male_Disabled') <=   medicaid(B) & disabled(B) & male(B)
 	# -- UNTIL HERE... need to add NEF65 indicator stuff instead of sex_age_range
 
-	
-	'''
 	indicator(B,'NEM0_34') <=  sex_age_range("male",B,0,34)
 	indicator(B,'NEM35_44') <=  sex_age_range("male",B,35,44)
 	indicator(B,'NEM45_54') <=  sex_age_range("male",B,45,54)
@@ -421,121 +408,59 @@ def load_rules():
 	indicator(B,'NEF85_89') <=  sex_age_range("female",B,85,89)
 	indicator(B,'NEF90_94') <=  sex_age_range("female",B,90,94)
 	indicator(B,'NEF95_GT') <=  sex_age_range("female",B,95,-1.0)
-
-	'''
-	reg_vars= new_enrollee_regression()
-	props= extract_terms(reg_vars)
-	for key , val in props.items():
-		for each in val:
-			temp_sex, temp_age_l, temp_age_u= extract_age_sex(each)
-			if temp_age_u==None:
-				indicator(B,key+'_'+each) <= (eval(key.lower())(B)) &sex_age(temp_sex,B,temp_age_l)
-			else:
-				indicator(B,key+'_'+each) <= (eval(key.lower())(B)) &sex_age_range(temp_sex, B, temp_age_l, temp_age_u)
-
-
-	################################################################
-
-	########## NE interactions : line 403 - 412 in V2212O1M.SAS ----> to be added here.
-
-	#################################################################
-
-	#indicator(B,'Origdis_female65') <=  originally_disabled(B) & indicator(B, 'NEF65')
-	#indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF66')
-	#indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF67')
-	#indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF68')
-	#indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF69')
-	#indicator(B,'Origdis_female70_74') <=  originally_disabled(B) & indicator(B, 'NEF70_74')
-	#indicator(B,'Origdis_female75_GT') <=  originally_disabled(B) & sex_age_range("female",B,74,-1.0)
-	#indicator(B,'Origdis_male65') <=  originally_disabled(B) & indicator(B, 'NEM65')
-	#indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM66')
-	#indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM67')
-	#indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM68')
-	#indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM69')
-	#indicator(B,'Origdis_male70_74') <=  originally_disabled(B) & indicator(B, 'NEM70_74')
-	#indicator(B,'Origdis_male75_GT') <=  originally_disabled(B) & sex_age_range("male",B,74,-1.0)
+	indicator(B,'Origdis_female65') <=  originally_disabled(B) & indicator(B, 'NEF65')
+	indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF66')
+	indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF67')
+	indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF68')
+	indicator(B,'Origdis_female66_69') <=  originally_disabled(B) & indicator(B, 'NEF69')
+	indicator(B,'Origdis_female70_74') <=  originally_disabled(B) & indicator(B, 'NEF70_74')
+	indicator(B,'Origdis_female75_GT') <=  originally_disabled(B) & sex_age_range("female",B,74,-1.0)
+	indicator(B,'Origdis_male65') <=  originally_disabled(B) & indicator(B, 'NEM65')
+	indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM66')
+	indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM67')
+	indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM68')
+	indicator(B,'Origdis_male66_69') <=  originally_disabled(B) & indicator(B, 'NEM69')
+	indicator(B,'Origdis_male70_74') <=  originally_disabled(B) & indicator(B, 'NEM70_74')
+	indicator(B,'Origdis_male75_GT') <=  originally_disabled(B) & sex_age_range("male",B,74,-1.0)
 	indicator(B,'ORIGDS') <= originally_disabled(B) 
 	indicator(B,'OriginallyDisabled_Female') <=  originally_disabled(B) & female(B)
 	indicator(B,'OriginallyDisabled_Male') <=  originally_disabled(B) & male(B)
 	indicator(B,'SCHIZOPHRENIA_CHF') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & schizophrenia_chf(CC,CC2) 
-	indicator(B,'SCHIZOPHRENIA_gCopdCF') <= ben_hcc(B,CC) & ben_hcc(B,CC2) & schizophrenia_gcopdcf(CC,CC2) 
+	indicator(B,'SCHIZOPHRENIA_COPD') <= ben_hcc(B,CC) & ben_hcc(B,CC2) & schizophrenia_copd(CC,CC2) 
 	indicator(B,'SCHIZOPHRENIA_SEIZURES') <= ben_hcc(B,CC) & ben_hcc(B,CC2) & schizophrenia_seizures(CC,CC2) 
 	indicator(B,'SEPSIS_ARTIF_OPENINGS') <= ben_hcc(B,CC) & ben_hcc(B,CC2) & sepsis_artif_openings(CC,CC2) 
 	indicator(B,'SEPSIS_ASP_SPEC_BACT_PNEUM') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & sepsis_asp_spec_bact_pneum(CC,CC2)
-	#indicator(B,'SEPSIS_CARD_RESP_FAIL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & sepsis_card_resp_fail(CC,CC2)
+	indicator(B,'SEPSIS_CARD_RESP_FAIL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & sepsis_card_resp_fail(CC,CC2)
 
-
-	indicator(B,'gRespDepandArre_gCopdCF') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & grespdepandarre_gcopdcf(CC,CC2)
-	indicator(B,"gSubstanceAbuse_gPsychiatric") <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & gsubstanceabuse_gpsychiatric(CC,CC2)
-	indicator(B,'HCC85_HCC96') <=  ben_hcc(B,'85')  & ben_hcc(B,'96')
-
-	indicator(B,'CHF_gCopdCF') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & chf_gcopdcf(CC,CC2)
-	indicator(B,'gCopdCF_CARD_RESP_FAIL') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & gcopdcf_card_resp_fail(CC,CC2)
-	indicator(B,'SEPSIS_PRESSURE_ULCER') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & sepsis_pressure_ulcer(CC,CC2)
-	indicator(B,'HCC47_gCancer') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & hcc47_gcancer(CC,CC2)
-	indicator(B,'HCC85_gDiabetesMellit') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & hcc85_gdiabetesmellit(CC,CC2)
-	indicator(B,'HCC85_gCopdCF') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & hcc85_gcopdcf(CC,CC2)
-	indicator(B,'HCC85_gRenal') <=  ben_hcc(B,CC) & ben_hcc(B,CC2) & hcc85_grenal(CC,CC2)
- 
 	# the following 3 lines are plain python 
 	#cvars = community_regression()
 
+	cvars = community_regression()
 	ivars = institutional_regression()
 	nevars = new_enrollee_regression()
-	cvarsa = community_regression_aged()
-	cvarsd = community_regression_disabled()
 
 
-	allvars = list(set().union(cvarsa,cvarsd,ivars,nevars))
+	allvars = list(set().union(cvars,ivars,nevars))
 
 	#(valid_community_variables[B] == concat_(CC,key=CC,sep=',')) <= indicator(B,CC) & CC.in_(cvars)
 	
-	(valid_community_aged_variables[B] == concat_(CC,key=CC,sep=',')) <= indicator(B,CC) & CC.in_(cvarsa)
-	(valid_community_disabled_variables[B] == concat_(CC,key=CC,sep=',')) <= indicator(B,CC) & CC.in_(cvarsd)
+	(valid_community_variables[B] == concat_(CC,key=CC,sep=',')) <= indicator(B,CC) & CC.in_(cvars)
 	(valid_institutional_variables[B] == concat_(CC,key=CC,sep=',')) <= indicator(B,CC) & CC.in_(ivars)
 	(valid_new_enrollee_variables[B] == concat_(CC,key=CC,sep=',')) <= indicator(B,CC) & CC.in_(nevars)
 
-	(new_enrollee_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(nevars) & coefficient("NE_"+CC,Coef)
+	# (new_enrollee_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
+	# 												& CC.in_(nevars) & coefficient("NE_"+CC,Coef)
+	# (institutional_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
+	# 												& CC.in_(ivars) & coefficient("INS_"+CC,Coef)
+	# (community_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
+	# 												& CC.in_(cvars) & coefficient("CE_"+CC,Coef)
+													
+																																				
+	# score(B,"community",Score) <= (community_score[B] == Score)
+	# score(B,"institutional",Score) <= (institutional_score[B] == Score)
+	# score(B,"new_enrollee",Score) <= (new_enrollee_score[B] == Score)
 
-	(institutional_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(ivars) & coefficient("INS_"+CC,Coef)
-	
-	(community_nondual_aged_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(cvarsa) & coefficient("CNA_"+CC,Coef)
-
-	(community_nondual_disabled_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(cvarsd) & coefficient("CND_"+CC,Coef)
-
-	(community_full_benefit_dual_aged_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(cvarsa) & coefficient("CFA_"+CC,Coef)
-
-	(community_full_benefit_dual_disabled_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(cvarsd) & coefficient("CFD_"+CC,Coef)
-
-	(community_partial_benefit_dual_aged_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(cvarsa) & coefficient("CPA_"+CC,Coef)	
-
-	(community_partial_benefit_dual_disabled_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(cvarsd) & coefficient("CPD_"+CC,Coef)
-
-	(snp_new_enrollee_score[B] == sum_(Coef,key=Coef)) <=  indicator(B,CC) \
-																								& CC.in_(nevars) & coefficient("SNPNE_"+CC,Coef)																						
-
-																								
-	score(B,"community_nondual_aged",Score) 							   <= (community_nondual_aged_score[B] == Score)
-	score(B,"community_nondual_disabled",Score) 					   <= (community_nondual_disabled_score[B] == Score)
-	score(B,"community_full_benefit_dual_aged",Score) 		   <= (community_full_benefit_dual_aged_score[B] == Score)
-	score(B,"community_full_benefit_dual_disabled",Score)    <= (community_full_benefit_dual_disabled_score[B] == Score)
-	score(B,"community_partial_benefit_dual_aged",Score) 		 <= (community_partial_benefit_dual_aged_score[B] == Score)
-	score(B,"community_partial_benefit_dual_disabled",Score) <= (community_partial_benefit_dual_disabled_score[B] == Score)
-
-	score(B,"institutional",Score) 													 <= (institutional_score[B] == Score)
-	score(B,"new_enrollee",Score) 													 <= (new_enrollee_score[B] == Score)
-	score(B,"snp_new_enrollee",Score) 											 <= (snp_new_enrollee_score[B] == Score)
-
-	regvars(B,"valid_community_aged_variables",Regvars) <= (valid_community_aged_variables[B] == Regvars)
-	regvars(B,"valid_community_disabled_variables",Regvars) <= (valid_community_disabled_variables[B] == Regvars)
+	regvars(B,"valid_community_variables",Regvars) <= (valid_community_variables[B] == Regvars)
 	regvars(B,"valid_institutional_variables",Regvars) <= (valid_institutional_variables[B] == Regvars)
 	regvars(B,"valid_new_enrollee_variables",Regvars) <= (valid_new_enrollee_variables[B] == Regvars)
 	
