@@ -137,7 +137,7 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
     t = raf_type_lookup[RAF_type][1]
 
-    print(t)
+    # print(t)
 
     ben_score = score(person, t, ScoreVar)
 
@@ -146,7 +146,7 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
     out_df = {}
 
     out_df['RAF_TYPE'] = RAF_type
-    out_df['score']= ben_score
+    out_df['score']= ben_score.pop()[0]
 
     if len(hcc_reg_variables_list) > 0:
 
