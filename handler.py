@@ -30,7 +30,7 @@ def format_date(date): return ''.join(date.split('-'))
 
 
 
-def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_type=None, orec=0, medicaid=True, codes=[]):
+def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_type=None, lob=None, orec=0, medicaid=True, codes=[]):
 
     global model
 
@@ -40,7 +40,7 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
     combined_score =0
 
-    for params in select_model(year_of_eligibility, RAF_type):
+    for params in select_model(year_of_eligibility, RAF_type,lob):
         print(params)
 
         try:

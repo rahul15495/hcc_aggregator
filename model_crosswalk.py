@@ -14,15 +14,18 @@ model_crosswalk= query_dict({'model_crosswalk':[
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
-                'models': [('v23', 0.25, 'v23_2019'), ('v22', 0.75, 'v22_2019')]
+                'models': [('v23', 0.25, 'v23_2019'), ('v22', 0.75, 'v22_2019')],
+                'lob': ['MA', 'ACO']
             },
             {
                 'raf_types': ['DI','DNE','GC','GI','GNE','TRANSPLANT','GE65','LT65'],
-                'models': [('esrd', 1, 'esrd_2019')]
+                'models': [('esrd', 1, 'esrd_2019')],
+                'lob': ['MA', 'ACO']
             },
             {
                 'raf_types':['CE','INS','NE'],
-                'models': [('v21', 1, 'v21_2019')]
+                'models': [('v21', 1, 'v21_2019')],
+                'lob': ['PACE']
             }
         ]
     },
@@ -30,15 +33,18 @@ model_crosswalk= query_dict({'model_crosswalk':[
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
-                'models': [('v22', 1, 'v22_2018')]
+                'models': [('v22', 1, 'v22_2018')],
+                'lob': ['MA', 'ACO']
             },
             {
                 'raf_types': ['DI','DNE','GC','GI','GNE','TRANSPLANT','GE65','LT65'],
-                'models': [('esrd', 1, 'esrd_2018')]
+                'models': [('esrd', 1, 'esrd_2018')],
+                'lob': ['MA', 'ACO']
             },
             {
                 'raf_types':['CE','INS','NE'],
-                'models': [('v21', 1, 'v21_2018')]
+                'models': [('v21', 1, 'v21_2018')],
+                'lob': ['PACE']
             }
         ]
     }
@@ -50,15 +56,15 @@ model_crosswalk= query_dict({'model_crosswalk':[
 select_year=lambda x: model_crosswalk.query('model_crosswalk:*:payment_year$',filters.eq(x))
 
 
-def select_model(year,raf_type): ##### arguments year--> '2019', raf_type --> 'CFA'
+def select_model(year,raf_type, lob): ##### arguments year--> '2019', raf_type --> 'CFA'
 
     temp_df= select_year(year)
 
     selected_element = None
 
-    for sub_list in temp_df.query('*:lookup:*:raf_types')[0] :
+    for sub_list,lob_list in zip(temp_df.query('*:lookup:*:raf_types')[0], temp_df.query('*:lookup:*:lob')[0]) :
 
-        if raf_type in sub_list:
+        if( raf_type in sub_list) and (lob in lob_list) :
 
             selected_element= sub_list
 
