@@ -31,124 +31,129 @@ def format_date(date): return ''.join(date.split('-'))
 
 
 def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_type=None, lob=None, orec=0, medicaid=True, codes=[]):
+    try:
 
-    global model
+        global model
 
-    RAF_type = RAF_type.upper()
+        RAF_type = RAF_type.upper()
 
-    combined_df= []
+        combined_df= []
 
-    combined_score =0
+        combined_score =0
 
-    for params in select_model(year_of_eligibility, RAF_type,lob):
-        print(params)
+        for params in select_model(year_of_eligibility, RAF_type,lob):
+            print(params)
 
-        try:
-            _, weight, model_name , coefficients_file_path = params
+            try:
+                _, weight, model_name , coefficients_file_path = params
 
-            model= importlib.import_module("models.{}.hcc".format(model_name))
-
-
-        except:
-            print("invalid RAF_type: {}".format(RAF_type))
-            print(traceback.format_exc())
-            return
-        
-        try:
-            coefficients_df = pd.read_csv(
-                coefficients_file_path, names=['raf_type', 'coeff', 'contribution_category'])
-
-            coefficients_df['raf_type']= coefficients_df['raf_type'].str.upper()
-
-            # print(coefficients_df.head())
-
-        except:
-
-            print('coefficients file not found : {}'.format(coefficients_file_path))
-
-        def get_coeff(x):
-            # print(x)
-            temp =coefficients_df[coefficients_df['raf_type'] == x].values[0]
-
-            return temp[2], temp[1]
-
-        formatted_dob = format_date(dob)
-
-        age_upto = "-".join([year_of_eligibility, month_of_eligibility, '01'])
-
-        # print(age_upto)
-
-        formatted_age_upto = format_date(age_upto)
-
-        formatted_sex = sex_lookup[sex.lower()]
-
-        if orec not in [0, 1, 2, 3]:
-            print("invaild original_reason_entitlement : {}".format(orec))
-            return
-
-        else:
-            temp_orec = orec
-
-            person = model.Beneficiary(hicno=hicno, sex=formatted_sex, dob=formatted_dob,
-                                age_upto=formatted_age_upto, original_reason_entitlement=temp_orec, medicaid=medicaid, )
-
-        for code in codes:
-
-            add_diagnosis_code(person, code)
-
-        pyDatalog.create_terms("Vars, ScoreVar")
-
-        temp_raf_type = raf_type_lookup[RAF_type][0]
-
-        hcc_reg_variables_list = model.regvars(person, temp_raf_type, model.Vars)
+                model= importlib.import_module("models.{}.hcc".format(model_name))
 
 
-        t = raf_type_lookup[RAF_type][1]
-
-
-        out_df = {}
-
-        out_df['RAF_TYPE'] = RAF_type
-        out_df['raf_contribution']= {
-            'Demographic': [],
-            'Clinical': [],
-            'Entitlement Class': []
-        }
-
-        score= 0
-        if len(hcc_reg_variables_list) > 0:
-
-            condition_categories = hcc_reg_variables_list[
-                0][0].split(',')
-
-
-
-            for temp_category in condition_categories:
-
-                formatted_category = "{}_{}".format(
-                    RAF_type, temp_category.upper())
-
-                category,temp_coeff = get_coeff(formatted_category)
-
-                out_df['raf_contribution'][category].append({temp_category: temp_coeff})
-
-                score+= temp_coeff
+            except:
+                print("invalid RAF_type: {}".format(RAF_type))
+                print(traceback.format_exc())
+                return
             
-            combined_score += score*weight
+            try:
+                coefficients_df = pd.read_csv(
+                    coefficients_file_path, names=['raf_type', 'coeff', 'contribution_category'])
+
+                coefficients_df['raf_type']= coefficients_df['raf_type'].str.upper()
+
+                # print(coefficients_df.head())
+
+            except:
+
+                print('coefficients file not found : {}'.format(coefficients_file_path))
+
+            def get_coeff(x):
+                # print(x)
+                temp =coefficients_df[coefficients_df['raf_type'] == x].values[0]
+
+                return temp[2], temp[1]
+
+            formatted_dob = format_date(dob)
+
+            age_upto = "-".join([year_of_eligibility, month_of_eligibility, '01'])
+
+            # print(age_upto)
+
+            formatted_age_upto = format_date(age_upto)
+
+            formatted_sex = sex_lookup[sex.lower()]
+
+            if orec not in [0, 1, 2, 3]:
+                print("invaild original_reason_entitlement : {}".format(orec))
+                return
+
+            else:
+                temp_orec = orec
+
+                person = model.Beneficiary(hicno=hicno, sex=formatted_sex, dob=formatted_dob,
+                                    age_upto=formatted_age_upto, original_reason_entitlement=temp_orec, medicaid=medicaid, )
+
+            for code in codes:
+
+                add_diagnosis_code(person, code)
+
+            pyDatalog.create_terms("Vars, ScoreVar")
+
+            temp_raf_type = raf_type_lookup[RAF_type][0]
+
+            hcc_reg_variables_list = model.regvars(person, temp_raf_type, model.Vars)
 
 
-        combined_df.append({'Model':model_name.split('_')[0] ,
-                        'Payment_Year':model_name.split('_')[1],
-                        'RAF_TYPE': out_df['RAF_TYPE'],
-                        'Raf_Contribution': out_df['raf_contribution'],
-                        'Score': score})
-
-        pyDatalog.clear()
-
-    final_df = {'models': combined_df, 'final_score': combined_score}
+            t = raf_type_lookup[RAF_type][1]
 
 
-    return final_df
+            out_df = {}
+
+            out_df['RAF_TYPE'] = RAF_type
+            out_df['raf_contribution']= {
+                'Demographic': [],
+                'Clinical': [],
+                'Entitlement Class': []
+            }
+
+            score= 0
+            if len(hcc_reg_variables_list) > 0:
+
+                condition_categories = hcc_reg_variables_list[
+                    0][0].split(',')
+
+
+
+                for temp_category in condition_categories:
+
+                    formatted_category = "{}_{}".format(
+                        RAF_type, temp_category.upper())
+
+                    category,temp_coeff = get_coeff(formatted_category)
+
+                    out_df['raf_contribution'][category].append({temp_category: temp_coeff})
+
+                    score+= temp_coeff
+                
+                combined_score += score*weight
+
+
+            combined_df.append({'Model':model_name.split('_')[0] ,
+                            'Payment_Year':model_name.split('_')[1],
+                            'RAF_TYPE': out_df['RAF_TYPE'],
+                            'Raf_Contribution': out_df['raf_contribution'],
+                            'Score': score})
+
+            pyDatalog.clear()
+
+        final_df = {'models': combined_df, 'final_score': combined_score}
+
+
+        return final_df
+    
+    except :
+        print(traceback.format_exc())
+        return None
 
 
 def add_diagnosis_code(Beneficiary, code):
