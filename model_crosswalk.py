@@ -10,7 +10,7 @@ model_override= {'2018' :['v22', 'v21']}
 
 model_crosswalk= query_dict({'model_crosswalk':[
 
-    {'payment_year' :'2019' , 'lookup': 
+    {'payment_year' :'2020' , 'year_of_eligibility':'2019' , 'dx_time_period': '2018' , 'lookup': 
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
@@ -29,7 +29,7 @@ model_crosswalk= query_dict({'model_crosswalk':[
             }
         ]
     },
-    {'payment_year' :'2018' , 'lookup': 
+    {'payment_year' :'2019' , 'year_of_eligibility':'2018' , 'dx_time_period': '2018' , 'lookup': 
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
@@ -53,12 +53,14 @@ model_crosswalk= query_dict({'model_crosswalk':[
 
 
 
-select_year=lambda x: model_crosswalk.query('model_crosswalk:*:payment_year$',filters.eq(x))
+select_year=lambda x: model_crosswalk.query('model_crosswalk:*:year_of_eligibility$',filters.eq(x))
 
 
 def select_model(year,raf_type, lob): ##### arguments year--> '2019', raf_type --> 'CFA'
 
     temp_df= select_year(year)
+
+    _payment_year= temp_df[0]['payment_year']
 
     selected_element = None
 
@@ -81,6 +83,8 @@ def select_model(year,raf_type, lob): ##### arguments year--> '2019', raf_type -
         if model[0] in list(model_override.values())[0] :
 
             model[2]= "{}_{}".format(model[0],list(model_override.keys()).pop())
+
+        model.append(_payment_year)
 
         out.append(model)
 

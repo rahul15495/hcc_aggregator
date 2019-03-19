@@ -45,7 +45,7 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
             print(params)
 
             try:
-                _, weight, model_name , coefficients_file_path = params
+                _, weight, model_name , coefficients_file_path, _payment_year= params
 
                 model= importlib.import_module("models.{}.hcc".format(model_name))
 
@@ -139,7 +139,7 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
 
 
             combined_df.append({'Model':model_name.split('_')[0] ,
-                            'Payment_Year':model_name.split('_')[1],
+                            'Payment_Year': _payment_year,
                             'RAF_TYPE': out_df['RAF_TYPE'],
                             'Raf_Contribution': out_df['raf_contribution'],
                             'Score': score})
