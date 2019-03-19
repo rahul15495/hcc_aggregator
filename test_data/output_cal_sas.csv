@@ -1,2 +1,0 @@
-,final_score,models
-0,1.006,"{'Model': 'v22', 'Payment_Year': '2018', 'RAF_TYPE': 'CFA', 'Raf_Contribution': {'Demographic': [{'M65_69': 0.49200000000000005}], 'Clinical': [{'HCC12': 0.159}, {'HCC85': 0.355}], 'Entitlement Class': []}, 'Score': 1.006}"

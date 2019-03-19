@@ -283,8 +283,8 @@ def load_rules():
 
 	# these predicates will be used to generate 
 	# more specific predicates like "F0_34"
-	age_range(B,L,U) <= age(B,A) & (A <= U) & (A > L) 
-	age_range(B,L,-1.0) <= age(B,A) & (A > L) 
+	age_range(B,L,U) <= age(B,A) & (A <= U) & (A >= L) 
+	age_range(B,L,-1.0) <= age(B,A) & (A >= L) 
 	sex_age_range("male",B,L,U) <= male(B) & age_range(B,L,U)
 	sex_age_range("female",B,L,U) <= female(B) & age_range(B,L,U)
 	sex_age(MF,B,A) <= sex_age_range(MF,B,(A+1),A)
