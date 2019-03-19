@@ -57,7 +57,7 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
             
             try:
                 coefficients_df = pd.read_csv(
-                    coefficients_file_path, names=['raf_type', 'coeff', 'contribution_category'])
+                    coefficients_file_path, names=['raf_type', 'coeff', 'contribution_category'], float_precision='high')
 
                 coefficients_df['raf_type']= coefficients_df['raf_type'].str.upper()
 
@@ -134,8 +134,12 @@ def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_t
                     out_df['raf_contribution'][category].append({temp_category: temp_coeff})
 
                     score+= temp_coeff
+
+                score= float(format(score, '0.3f'))
                 
                 combined_score += score*weight
+
+                combined_score= float(format(combined_score, '0.3f'))
 
 
             combined_df.append({'Model':model_name.split('_')[0] ,
