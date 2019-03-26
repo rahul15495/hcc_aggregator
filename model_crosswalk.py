@@ -10,7 +10,7 @@ model_override= {'2018' :['v22', 'v21']}
 
 model_crosswalk= query_dict({'model_crosswalk':[
 
-    {'payment_year' :'2020' , 'year_of_eligibility':'2019' , 'dx_time_period': '2018' , 'lookup': 
+    {'payment_year' :'2019' , 'year_of_eligibility':'2019' , 'dx_time_period': '2017' , 'lookup': 
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
@@ -29,7 +29,7 @@ model_crosswalk= query_dict({'model_crosswalk':[
             }
         ]
     },
-    {'payment_year' :'2019' , 'year_of_eligibility':'2018' , 'dx_time_period': '2018' , 'lookup': 
+    {'payment_year' :'2018' , 'year_of_eligibility':'2018' , 'dx_time_period': '2017' , 'lookup': 
         [
             {
                 'raf_types': ['CFA','CNA','CPA','CFD','CND','CPD','INS','NE','SNPNE'],
