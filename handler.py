@@ -30,7 +30,7 @@ def format_date(date): return ''.join(date.split('-'))
 
 
 
-def get_scores(hicno, sex, dob, month_of_eligibility, year_of_eligibility, RAF_type=None, lob=None, orec=0, medicaid=True, codes=[]):
+def get_scores(hicno, sex, dob, year_of_eligibility,month_of_eligibility='02', RAF_type=None, lob=None, orec=0, medicaid=True, codes=[]):
     try:
 
         global model
